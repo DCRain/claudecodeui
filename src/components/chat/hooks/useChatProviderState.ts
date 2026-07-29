@@ -21,9 +21,11 @@ const FALLBACK_DEFAULT_MODEL: Record<LLMProvider, string> = {
   cursor: 'gpt-5.3-codex',
   codex: 'gpt-5.4',
   opencode: 'anthropic/claude-sonnet-4-5',
+  qoder: 'Default',
+  trae: 'anthropic/claude-sonnet-4-5',
 };
 
-const PROVIDERS: LLMProvider[] = ['claude', 'cursor', 'codex', 'opencode'];
+const PROVIDERS: LLMProvider[] = ['claude', 'cursor', 'codex', 'opencode', 'qoder', 'trae'];
 
 const readStoredProvider = (): LLMProvider => {
   const storedProvider = localStorage.getItem('selected-provider');
@@ -43,6 +45,8 @@ const FALLBACK_PERMISSION_MODES: Record<LLMProvider, PermissionMode[]> = {
   cursor: ['default', 'acceptEdits', 'bypassPermissions', 'plan'],
   codex: ['default', 'acceptEdits', 'bypassPermissions'],
   opencode: ['default', 'acceptEdits', 'bypassPermissions', 'plan'],
+  qoder: ['default', 'bypassPermissions'],
+  trae: ['default', 'bypassPermissions'],
 };
 
 type ProviderCapabilities = {
@@ -109,6 +113,12 @@ export function useChatProviderState({ selectedSession, selectedProject: _select
   const [opencodeModel, setOpenCodeModel] = useState<string>(() => {
     return localStorage.getItem('opencode-model') || FALLBACK_DEFAULT_MODEL.opencode;
   });
+  const [qoderModel, setQoderModel] = useState<string>(() => {
+    return localStorage.getItem('qoder-model') || FALLBACK_DEFAULT_MODEL.qoder;
+  });
+  const [traeModel, setTraeModel] = useState<string>(() => {
+    return localStorage.getItem('trae-model') || FALLBACK_DEFAULT_MODEL.trae;
+  });
 
   /**
    * Backend-owned capability matrix keyed by provider. Drives the permission
@@ -151,8 +161,20 @@ export function useChatProviderState({ selectedSession, selectedProject: _select
       return;
     }
 
-    setOpenCodeModel(model);
-    localStorage.setItem('opencode-model', model);
+    if (targetProvider === 'opencode') {
+      setOpenCodeModel(model);
+      localStorage.setItem('opencode-model', model);
+      return;
+    }
+
+    if (targetProvider === 'qoder') {
+      setQoderModel(model);
+      localStorage.setItem('qoder-model', model);
+      return;
+    }
+
+    setTraeModel(model);
+    localStorage.setItem('trae-model', model);
   }, []);
 
   const setStoredProviderEffort = useCallback((targetProvider: LLMProvider, effort: string) => {
@@ -355,7 +377,9 @@ export function useChatProviderState({ selectedSession, selectedProject: _select
     cursor: cursorModel,
     codex: codexModel,
     opencode: opencodeModel,
-  }), [claudeModel, cursorModel, codexModel, opencodeModel]);
+    qoder: qoderModel,
+    trae: traeModel,
+  }), [claudeModel, cursorModel, codexModel, opencodeModel, qoderModel, traeModel]);
 
   useEffect(() => {
     const claude = providerModelCatalog.claude;
@@ -408,6 +432,32 @@ export function useChatProviderState({ selectedSession, selectedProject: _select
       }
     }
   }, [providerModelCatalog.opencode, opencodeModel]);
+
+  useEffect(() => {
+    const qoder = providerModelCatalog.qoder;
+    if (qoder) {
+      const next = pickStoredOrCurrent('qoder-model', qoderModel, qoder);
+      if (next !== qoderModel) {
+        setQoderModel(next);
+      }
+      if (localStorage.getItem('qoder-model') !== next) {
+        localStorage.setItem('qoder-model', next);
+      }
+    }
+  }, [providerModelCatalog.qoder, qoderModel]);
+
+  useEffect(() => {
+    const trae = providerModelCatalog.trae;
+    if (trae) {
+      const next = pickStoredOrCurrent('trae-model', traeModel, trae);
+      if (next !== traeModel) {
+        setTraeModel(next);
+      }
+      if (localStorage.getItem('trae-model') !== next) {
+        localStorage.setItem('trae-model', next);
+      }
+    }
+  }, [providerModelCatalog.trae, traeModel]);
 
   useEffect(() => {
     const nextEfforts: Partial<Record<LLMProvider, string>> = {};
@@ -571,6 +621,10 @@ export function useChatProviderState({ selectedSession, selectedProject: _select
     currentProviderEffortOptions,
     opencodeModel,
     setOpenCodeModel,
+    qoderModel,
+    setQoderModel,
+    traeModel,
+    setTraeModel,
     permissionMode,
     setPermissionMode,
     pendingPermissionRequests,

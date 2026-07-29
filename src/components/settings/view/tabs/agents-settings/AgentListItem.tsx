@@ -32,6 +32,14 @@ const agentConfig: Record<AgentProvider, AgentConfig> = {
     name: 'OpenCode',
     color: 'zinc',
   },
+  qoder: {
+    name: 'Qoder',
+    color: 'zinc',
+  },
+  trae: {
+    name: 'Trae',
+    color: 'zinc',
+  },
 };
 
 const colorClasses = {

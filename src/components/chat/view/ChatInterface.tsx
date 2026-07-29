@@ -73,6 +73,10 @@ function ChatInterface({
     currentProviderEffortOptions,
     opencodeModel,
     setOpenCodeModel,
+    qoderModel,
+    setQoderModel,
+    traeModel,
+    setTraeModel,
     permissionMode,
     pendingPermissionRequests,
     setPendingPermissionRequests,
@@ -339,8 +343,14 @@ function ChatInterface({
           setCodexModel={setCodexModel}
           opencodeModel={opencodeModel}
           setOpenCodeModel={setOpenCodeModel}
+          qoderModel={qoderModel}
+          setQoderModel={setQoderModel}
+          traeModel={traeModel}
+          setTraeModel={setTraeModel}
           providerModelCatalog={providerModelCatalog}
           providerModelsLoading={providerModelsLoading}
+          providerModelsRefreshing={providerModelsRefreshing}
+          onHardRefreshProviderModels={hardRefreshProviderModels}
           tasksEnabled={tasksEnabled}
           isTaskMasterInstalled={isTaskMasterInstalled}
           onShowAllTasks={onShowAllTasks}

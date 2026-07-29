@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, RefreshCw } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 
 import type {
@@ -28,6 +28,8 @@ const PROVIDER_META: { id: LLMProvider; name: string }[] = [
   { id: "codex", name: "OpenAI" },
   { id: "cursor", name: "Cursor" },
   { id: "opencode", name: "OpenCode" },
+  { id: "qoder", name: "Qoder" },
+  { id: "trae", name: "Trae" },
 ];
 
 const MOD_KEY =
@@ -58,8 +60,14 @@ type ProviderSelectionEmptyStateProps = {
   setCodexModel: (model: string) => void;
   opencodeModel: string;
   setOpenCodeModel: (model: string) => void;
+  qoderModel: string;
+  setQoderModel: (model: string) => void;
+  traeModel: string;
+  setTraeModel: (model: string) => void;
   providerModelCatalog: Partial<Record<LLMProvider, ProviderModelsDefinition>>;
   providerModelsLoading: boolean;
+  providerModelsRefreshing: boolean;
+  onHardRefreshProviderModels: () => void;
   tasksEnabled: boolean;
   isTaskMasterInstalled: boolean | null;
   onShowAllTasks?: (() => void) | null;
@@ -86,10 +94,14 @@ function getCurrentModel(
   cu: string,
   co: string,
   o: string,
+  q: string,
+  t: string,
 ) {
   if (p === "claude") return c;
   if (p === "codex") return co;
   if (p === "opencode") return o;
+  if (p === "qoder") return q;
+  if (p === "trae") return t;
   return cu;
 }
 
@@ -98,6 +110,8 @@ function getProviderDisplayName(p: LLMProvider) {
   if (p === "cursor") return "Cursor";
   if (p === "codex") return "Codex";
   if (p === "opencode") return "OpenCode";
+  if (p === "qoder") return "Qoder";
+  if (p === "trae") return "Trae";
   return "Claude";
 }
 
@@ -115,8 +129,14 @@ export default function ProviderSelectionEmptyState({
   setCodexModel,
   opencodeModel,
   setOpenCodeModel,
+  qoderModel,
+  setQoderModel,
+  traeModel,
+  setTraeModel,
   providerModelCatalog,
   providerModelsLoading,
+  providerModelsRefreshing,
+  onHardRefreshProviderModels,
   tasksEnabled,
   isTaskMasterInstalled,
   onShowAllTasks,
@@ -143,6 +163,8 @@ export default function ProviderSelectionEmptyState({
     cursorModel,
     codexModel,
     opencodeModel,
+    qoderModel,
+    traeModel,
   );
 
   const currentModelLabel = useMemo(() => {
@@ -164,12 +186,18 @@ export default function ProviderSelectionEmptyState({
       } else if (providerId === "opencode") {
         setOpenCodeModel(modelValue);
         localStorage.setItem("opencode-model", modelValue);
+      } else if (providerId === "qoder") {
+        setQoderModel(modelValue);
+        localStorage.setItem("qoder-model", modelValue);
+      } else if (providerId === "trae") {
+        setTraeModel(modelValue);
+        localStorage.setItem("trae-model", modelValue);
       } else {
         setCursorModel(modelValue);
         localStorage.setItem("cursor-model", modelValue);
       }
     },
-    [setClaudeModel, setCursorModel, setCodexModel, setOpenCodeModel],
+    [setClaudeModel, setCursorModel, setCodexModel, setOpenCodeModel, setQoderModel, setTraeModel],
   );
 
   const handleModelSelect = useCallback(
@@ -231,8 +259,18 @@ export default function ProviderSelectionEmptyState({
 
             <DialogContent className="max-w-md overflow-hidden p-0">
               <DialogTitle>Model Selector</DialogTitle>
-              <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
+              <div className="flex items-center justify-between border-b border-border/60 bg-muted/20 px-4 py-3">
                 <p className="text-sm font-semibold text-foreground">Choose a model</p>
+                <button
+                  type="button"
+                  onClick={onHardRefreshProviderModels}
+                  disabled={providerModelsRefreshing}
+                  title="Refresh model list"
+                  aria-label="Refresh model list"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${providerModelsRefreshing ? 'animate-spin' : ''}`} />
+                </button>
               </div>
               <Command filter={modelSearchFilter}>
                 <CommandInput
@@ -315,6 +353,14 @@ export default function ProviderSelectionEmptyState({
                 opencode: t("providerSelection.readyPrompt.opencode", {
                   model: opencodeModel,
                   defaultValue: "Ready with OpenCode {{model}}",
+                }),
+                qoder: t("providerSelection.readyPrompt.qoder", {
+                  model: qoderModel,
+                  defaultValue: "Ready with Qoder {{model}}",
+                }),
+                trae: t("providerSelection.readyPrompt.trae", {
+                  model: traeModel,
+                  defaultValue: "Ready with Trae {{model}}",
                 }),
               }[provider]
             }

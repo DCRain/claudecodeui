@@ -8,6 +8,8 @@ const AGENT_NAMES: Record<AgentProvider, string> = {
   cursor: 'Cursor',
   codex: 'Codex',
   opencode: 'OpenCode',
+  qoder: 'Qoder',
+  trae: 'Trae',
 };
 
 export default function AgentSelectorSection({

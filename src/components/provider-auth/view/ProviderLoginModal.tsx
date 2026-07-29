@@ -41,6 +41,14 @@ const getProviderCommand = ({
     return 'opencode auth login';
   }
 
+  if (provider === 'qoder') {
+    return 'qodercli /login';
+  }
+
+  if (provider === 'trae') {
+    return 'trae-cli interactive';
+  }
+
   return 'claude --dangerously-skip-permissions /login';
 };
 
@@ -49,6 +57,8 @@ const getProviderTitle = (provider: LLMProvider) => {
   if (provider === 'cursor') return 'Cursor CLI Login';
   if (provider === 'codex') return 'Codex CLI Login';
   if (provider === 'opencode') return 'OpenCode CLI Login';
+  if (provider === 'qoder') return 'Qoder CLI Login';
+  if (provider === 'trae') return 'Trae CLI Login';
   return 'Claude CLI Login';
 };
 

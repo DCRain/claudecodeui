@@ -10,13 +10,15 @@ export type ProviderAuthStatus = {
 
 export type ProviderAuthStatusMap = Record<LLMProvider, ProviderAuthStatus>;
 
-export const CLI_PROVIDERS: LLMProvider[] = ['claude', 'cursor', 'codex', 'opencode'];
+export const CLI_PROVIDERS: LLMProvider[] = ['claude', 'cursor', 'codex', 'opencode', 'qoder', 'trae'];
 
 export const PROVIDER_AUTH_STATUS_ENDPOINTS: Record<LLMProvider, string> = {
   claude: '/api/providers/claude/auth/status',
   cursor: '/api/providers/cursor/auth/status',
   codex: '/api/providers/codex/auth/status',
   opencode: '/api/providers/opencode/auth/status',
+  qoder: '/api/providers/qoder/auth/status',
+  trae: '/api/providers/trae/auth/status',
 };
 
 export const createInitialProviderAuthStatusMap = (loading = true): ProviderAuthStatusMap => ({
@@ -24,4 +26,6 @@ export const createInitialProviderAuthStatusMap = (loading = true): ProviderAuth
   cursor: { authenticated: false, email: null, method: null, error: null, loading },
   codex: { authenticated: false, email: null, method: null, error: null, loading },
   opencode: { authenticated: false, email: null, method: null, error: null, loading },
+  qoder: { authenticated: false, email: null, method: null, error: null, loading },
+  trae: { authenticated: false, email: null, method: null, error: null, loading },
 });

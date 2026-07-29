@@ -21,13 +21,13 @@ export default function AgentsSettingsTab({
   const [selectedAgent, setSelectedAgent] = useState<AgentProvider>('claude');
   const [selectedCategory, setSelectedCategory] = useState<AgentCategory>('account');
   const visibleCategories = useMemo<AgentCategory[]>(() => (
-    selectedAgent === 'opencode'
+    selectedAgent === 'opencode' || selectedAgent === 'qoder' || selectedAgent === 'trae'
       ? ['account', 'permissions', 'mcp']
       : ['account', 'permissions', 'mcp', 'skills']
   ), [selectedAgent]);
 
   const visibleAgents = useMemo<AgentProvider[]>(() => {
-    return ['claude', 'cursor', 'codex', 'opencode'];
+    return ['claude', 'cursor', 'codex', 'opencode', 'qoder', 'trae'];
   }, []);
 
   const agentContextById = useMemo<Record<AgentProvider, AgentContext>>(() => ({
@@ -47,12 +47,22 @@ export default function AgentsSettingsTab({
       authStatus: providerAuthStatus.opencode,
       onLogin: () => onProviderLogin('opencode'),
     },
+    qoder: {
+      authStatus: providerAuthStatus.qoder,
+      onLogin: () => onProviderLogin('qoder'),
+    },
+    trae: {
+      authStatus: providerAuthStatus.trae,
+      onLogin: () => onProviderLogin('trae'),
+    },
   }), [
     onProviderLogin,
     providerAuthStatus.claude,
     providerAuthStatus.codex,
     providerAuthStatus.cursor,
     providerAuthStatus.opencode,
+    providerAuthStatus.qoder,
+    providerAuthStatus.trae,
   ]);
 
   useEffect(() => {

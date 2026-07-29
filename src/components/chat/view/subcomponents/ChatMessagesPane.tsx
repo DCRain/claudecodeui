@@ -40,8 +40,14 @@ interface ChatMessagesPaneProps {
   setCodexModel: (model: string) => void;
   opencodeModel: string;
   setOpenCodeModel: (model: string) => void;
+  qoderModel: string;
+  setQoderModel: (model: string) => void;
+  traeModel: string;
+  setTraeModel: (model: string) => void;
   providerModelCatalog: Partial<Record<LLMProvider, ProviderModelsDefinition>>;
   providerModelsLoading: boolean;
+  providerModelsRefreshing: boolean;
+  onHardRefreshProviderModels: () => void;
   tasksEnabled: boolean;
   isTaskMasterInstalled: boolean | null;
   onShowAllTasks?: (() => void) | null;
@@ -88,8 +94,14 @@ function ChatMessagesPane({
   setCodexModel,
   opencodeModel,
   setOpenCodeModel,
+  qoderModel,
+  setQoderModel,
+  traeModel,
+  setTraeModel,
   providerModelCatalog,
   providerModelsLoading,
+  providerModelsRefreshing,
+  onHardRefreshProviderModels,
   tasksEnabled,
   isTaskMasterInstalled,
   onShowAllTasks,
@@ -187,8 +199,14 @@ function ChatMessagesPane({
           setCodexModel={setCodexModel}
           opencodeModel={opencodeModel}
           setOpenCodeModel={setOpenCodeModel}
+          qoderModel={qoderModel}
+          setQoderModel={setQoderModel}
+          traeModel={traeModel}
+          setTraeModel={setTraeModel}
           providerModelCatalog={providerModelCatalog}
           providerModelsLoading={providerModelsLoading}
+          providerModelsRefreshing={providerModelsRefreshing}
+          onHardRefreshProviderModels={onHardRefreshProviderModels}
           tasksEnabled={tasksEnabled}
           isTaskMasterInstalled={isTaskMasterInstalled}
           onShowAllTasks={onShowAllTasks}

@@ -40,6 +40,14 @@ import {
     abortOpenCodeSession,
 } from './opencode-cli.js';
 import {
+    spawnQoder,
+    abortQoderSession,
+} from './qoder-cli.js';
+import {
+    spawnTrae,
+    abortTraeSession,
+} from './trae-cli.js';
+import {
     stripAnsiSequences,
     normalizeDetectedUrl,
     extractUrlsFromText,
@@ -114,12 +122,16 @@ const wss = createWebSocketServer(server, {
             cursor: spawnCursor,
             codex: queryCodex,
             opencode: spawnOpenCode,
+            qoder: spawnQoder,
+            trae: spawnTrae,
         },
         abortFns: {
             claude: abortClaudeSDKSession,
             cursor: abortCursorSession,
             codex: abortCodexSession,
             opencode: abortOpenCodeSession,
+            qoder: abortQoderSession,
+            trae: abortTraeSession,
         },
         resolveToolApproval,
         getPendingApprovalsForSession,

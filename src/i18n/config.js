@@ -96,20 +96,6 @@ import zhTWTasks from './locales/zh-TW/tasks.json';
 // Import supported languages configuration
 import { languages } from './languages.js';
 
-// Get saved language preference from localStorage
-const getSavedLanguage = () => {
-  try {
-    const saved = localStorage.getItem('userLanguage');
-    // Validate that the saved language is supported
-    if (saved && languages.some(lang => lang.value === saved)) {
-      return saved;
-    }
-    return 'en';
-  } catch {
-    return 'en';
-  }
-};
-
 // Initialize i18next
 i18n
   .use(LanguageDetector) // Detect user language
@@ -198,9 +184,6 @@ i18n
       },
     },
 
-    // Default language
-    lng: getSavedLanguage(),
-
     // Fallback language when a translation is missing
     fallbackLng: 'en',
 
@@ -234,8 +217,8 @@ i18n
 
     // Detection options
     detection: {
-      // Order of language detection (local storage first)
-      order: ['localStorage'],
+      // Order of language detection: saved preference first, then browser
+      order: ['localStorage', 'navigator'],
 
       // Keys to look for in localStorage
       lookupLocalStorage: 'userLanguage',

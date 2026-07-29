@@ -75,6 +75,26 @@ const PROVIDER_CAPABILITIES: Record<LLMProvider, ProviderCapabilities> = {
     supportsTokenUsage: true,
     supportsEffort: true,
   },
+  qoder: {
+    provider: 'qoder',
+    permissionModes: ['default', 'bypassPermissions'],
+    defaultPermissionMode: 'default',
+    supportsImages: false,
+    supportsAbort: true,
+    supportsPermissionRequests: false,
+    supportsTokenUsage: false,
+    supportsEffort: false,
+  },
+  trae: {
+    provider: 'trae',
+    permissionModes: ['default', 'bypassPermissions'],
+    defaultPermissionMode: 'default',
+    supportsImages: false,
+    supportsAbort: true,
+    supportsPermissionRequests: false,
+    supportsTokenUsage: false,
+    supportsEffort: false,
+  },
 };
 
 /**
