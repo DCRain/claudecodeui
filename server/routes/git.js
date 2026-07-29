@@ -614,7 +614,7 @@ router.post('/initial-commit', async (req, res) => {
 
 // Commit changes
 router.post('/commit', async (req, res) => {
-  const { project, message, files } = req.body;
+  const { project, message, files, noVerify } = req.body;
   
   if (!project || !message || !files || files.length === 0) {
     return res.status(400).json({ error: 'Project name, commit message, and files are required' });
@@ -633,13 +633,19 @@ router.post('/commit', async (req, res) => {
       await spawnAsync('git', ['add', '--', repositoryRelativeFilePath], { cwd: repositoryRootPath });
     }
 
-    // Commit with message
-    const { stdout } = await spawnAsync('git', ['commit', '-m', message], { cwd: repositoryRootPath });
+    // Commit with message (skip hooks when noVerify is true)
+    const commitArgs = noVerify
+      ? ['commit', '--no-verify', '-m', message]
+      : ['commit', '-m', message];
+    const { stdout, stderr } = await spawnAsync('git', commitArgs, { cwd: repositoryRootPath });
     
     res.json({ success: true, output: stdout });
   } catch (error) {
     console.error('Git commit error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: error.message,
+      details: error.stderr || error.stdout || undefined,
+    });
   }
 });
 

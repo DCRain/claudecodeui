@@ -21,10 +21,12 @@ type ChangesViewProps = {
   onDeleteFile: (filePath: string) => Promise<void>;
   onStageFiles: (files: string[]) => Promise<boolean>;
   onUnstageFiles: (files: string[]) => Promise<boolean>;
-  onCommitChanges: (message: string, files: string[]) => Promise<boolean>;
+  onCommitChanges: (message: string, files: string[], noVerify?: boolean) => Promise<boolean>;
   onGenerateCommitMessage: (files: string[]) => Promise<string | null>;
   onRequestConfirmation: (request: ConfirmationRequest) => void;
   onExpandedFilesChange: (hasExpandedFiles: boolean) => void;
+  commitError?: string | null;
+  onClearCommitError?: () => void;
 };
 
 export default function ChangesView({
@@ -46,6 +48,8 @@ export default function ChangesView({
   onGenerateCommitMessage,
   onRequestConfirmation,
   onExpandedFilesChange,
+  commitError,
+  onClearCommitError,
 }: ChangesViewProps) {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -151,8 +155,8 @@ export default function ChangesView({
   );
 
   const commitSelectedFiles = useCallback(
-    (message: string) => {
-      return onCommitChanges(message, Array.from(selectedFiles));
+    (message: string, noVerify?: boolean) => {
+      return onCommitChanges(message, Array.from(selectedFiles), noVerify);
     },
     [onCommitChanges, selectedFiles],
   );
@@ -176,6 +180,8 @@ export default function ChangesView({
         onCommit={commitSelectedFiles}
         onGenerateMessage={generateMessageForSelection}
         onRequestConfirmation={onRequestConfirmation}
+        error={commitError || undefined}
+        onClearError={onClearCommitError}
       />
 
       {!gitStatus?.error && <FileStatusLegend isMobile={isMobile} />}

@@ -146,6 +146,8 @@ export default function GitPanel({ selectedProject, isMobile = false, onFileOpen
               onGenerateCommitMessage={generateCommitMessage}
               onRequestConfirmation={setConfirmAction}
               onExpandedFilesChange={setHasExpandedFiles}
+              commitError={operationError}
+              onClearCommitError={clearOperationError}
             />
           )}
 

@@ -637,7 +637,7 @@ export function useGitPanelController({
   );
 
   const commitChanges = useCallback(
-    async (message: string, files: string[]) => {
+    async (message: string, files: string[], noVerify?: boolean) => {
       if (!selectedProject || !message.trim() || files.length === 0) {
         return false;
       }
@@ -650,20 +650,24 @@ export function useGitPanelController({
             project: selectedProject.projectId,
             message,
             files,
+            noVerify,
           }),
         });
 
         const data = await readJson<GitOperationResponse>(response);
         if (data.success) {
+          setOperationError(null);
           void fetchGitStatus();
           void fetchRemoteStatus();
           return true;
         }
 
-        console.error('Commit failed:', data.error);
+        const errMsg = data.details || data.error || 'Commit failed';
+        setOperationError(errMsg);
         return false;
       } catch (error) {
-        console.error('Error committing changes:', error);
+        const errMsg = error instanceof Error ? error.message : 'Commit failed';
+        setOperationError(errMsg);
         return false;
       }
     },
