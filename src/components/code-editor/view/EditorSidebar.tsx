@@ -115,7 +115,7 @@ export default function EditorSidebar({
       )}
 
       <div
-        className={`h-full overflow-hidden border-l border-gray-200 dark:border-gray-700 ${useFlexLayout ? 'min-w-0 flex-1' : `min-w-[ flex-shrink-0${MIN_EDITOR_WIDTH}px]`}`}
+        className={`h-full overflow-hidden border-l border-gray-200 dark:border-gray-700 ${useFlexLayout ? 'min-w-0 flex-1' : `min-w-[${MIN_EDITOR_WIDTH}px] flex-shrink-0`}`}
         style={useFlexLayout ? undefined : { width: `${effectiveWidth}px`, minWidth: `${MIN_EDITOR_WIDTH}px` }}
       >
         <CodeEditor

@@ -76,6 +76,7 @@ export class OpenCodeSessionSynchronizer implements IProviderSessionSynchronizer
         FROM session s
         LEFT JOIN project p ON p.id = s.project_id
         WHERE s.time_archived IS NULL
+          AND s.parent_id IS NULL
           AND (? IS NULL OR COALESCE(s.time_updated, s.time_created, 0) >= ?)
         ORDER BY COALESCE(s.time_updated, s.time_created, 0) DESC, s.id DESC
         ${limitClause}

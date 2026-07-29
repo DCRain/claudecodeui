@@ -59,7 +59,12 @@ export default defineConfig(({ mode }) => {
               '@codemirror/lang-json',
               '@codemirror/lang-markdown',
               '@codemirror/lang-python',
-              '@codemirror/theme-one-dark'
+              '@codemirror/theme-one-dark',
+              '@codemirror/state',
+              '@codemirror/view',
+              '@codemirror/language',
+              '@codemirror/merge',
+              '@replit/codemirror-minimap'
             ],
             'vendor-xterm': ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-clipboard', '@xterm/addon-webgl']
           }
