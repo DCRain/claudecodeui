@@ -50,7 +50,8 @@
     "cancel": "Annulla",
     "clearSearch": "Cancella ricerca",
     "openCommandPalette": "Apri tavolozza comandi",
-    "attentionRequiredIndicator": "La sessione richiede attenzione"
+    "attentionRequiredIndicator": "La sessione richiede attenzione",
+    "openProject": "Apri cartella esistente come progetto"
   },
   "navigation": {
     "chat": "Chat",

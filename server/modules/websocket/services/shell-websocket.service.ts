@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -163,6 +164,145 @@ function buildShellCommand(
   return command;
 }
 
+/**
+ * Returns true when a shell binary path looks usable.
+ */
+function isExecutableShellPath(shellPath: string): boolean {
+  if (!shellPath || shellPath === '/sbin/nologin' || shellPath === '/usr/sbin/nologin' || shellPath === '/bin/false') {
+    return false;
+  }
+
+  try {
+    return fs.existsSync(shellPath) && fs.statSync(shellPath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolves the user's preferred interactive shell (bash / zsh / fish / …).
+ *
+ * Prefer the login-shell from the user database over `$SHELL`, because CloudCLI
+ * often runs as a service/daemon where `SHELL=/bin/bash` even when the operator
+ * uses zsh/fish interactively.
+ */
+function resolveUserShell(): string {
+  if (os.platform() === 'win32') {
+    return 'powershell.exe';
+  }
+
+  const candidates: string[] = [];
+
+  // Explicit override for daemon installs where passwd/env are wrong.
+  const configuredShell = process.env.CLOUDCLI_SHELL?.trim();
+  if (configuredShell) {
+    candidates.push(configuredShell);
+  }
+
+  // When started with sudo, prefer the invoking user's login shell.
+  const sudoUser = process.env.SUDO_USER?.trim();
+  if (sudoUser) {
+    try {
+      const sudoShell = String(execFileSync('getent', ['passwd', sudoUser], { encoding: 'utf8' })).split(':')[6]?.trim();
+      if (sudoShell) {
+        candidates.push(sudoShell);
+      }
+    } catch {
+      // Username may not resolve in containers / restricted hosts.
+    }
+  }
+
+  try {
+    const shellFromUserInfo = os.userInfo().shell?.trim();
+    if (shellFromUserInfo) {
+      candidates.push(shellFromUserInfo);
+    }
+  } catch {
+    // userInfo() can throw on some restricted environments.
+  }
+
+  const fromEnv = process.env.SHELL?.trim();
+  if (fromEnv) {
+    candidates.push(fromEnv);
+  }
+
+  for (const candidate of candidates) {
+    if (isExecutableShellPath(candidate)) {
+      return candidate;
+    }
+  }
+
+  for (const fallback of ['/bin/zsh', '/usr/bin/zsh', '/bin/fish', '/usr/bin/fish', '/bin/bash', '/usr/bin/bash']) {
+    if (isExecutableShellPath(fallback)) {
+      return fallback;
+    }
+  }
+
+  return '/bin/bash';
+}
+
+/**
+ * Login/interactive flags for common shells.
+ * Unknown shells get no flags and rely on the PTY for interactivity.
+ */
+function interactiveShellArgs(shellPath: string): string[] {
+  const base = path.basename(shellPath).toLowerCase();
+  if (base === 'bash' || base === 'zsh' || base === 'sh' || base === 'fish' || base === 'dash' || base === 'ksh') {
+    return ['-l'];
+  }
+
+  return [];
+}
+
+/**
+ * Resolves which binary/args to spawn for a shell websocket session.
+ *
+ * Plain shells without an initial command must stay interactive (no `-c ''`),
+ * otherwise the PTY exits immediately and the project terminal tab is unusable.
+ * Interactive plain shells follow the user's default shell (bash/zsh/fish/…).
+ */
+function resolveShellSpawn(
+  message: ShellIncomingMessage,
+  dependencies: ShellWebSocketDependencies,
+): { shell: string; args: string[]; isPlainShell: boolean; shellCommand: string } {
+  const initialCommand = readString(message.initialCommand);
+  const provider = readString(message.provider, 'claude');
+  const hasSession = readBoolean(message.hasSession);
+  const isPlainShell =
+    readBoolean(message.isPlainShell) ||
+    (!!initialCommand && !hasSession) ||
+    provider === 'plain-shell';
+
+  const shellCommand = buildShellCommand(message, dependencies);
+  const isWindows = os.platform() === 'win32';
+
+  if (isPlainShell && !shellCommand) {
+    if (isWindows) {
+      return {
+        shell: 'powershell.exe',
+        args: ['-NoLogo'],
+        isPlainShell,
+        shellCommand,
+      };
+    }
+
+    const userShell = resolveUserShell();
+    return {
+      shell: userShell,
+      args: interactiveShellArgs(userShell),
+      isPlainShell,
+      shellCommand,
+    };
+  }
+
+  return {
+    shell: isWindows ? 'powershell.exe' : 'bash',
+    args: isWindows ? ['-Command', shellCommand] : ['-c', shellCommand],
+    isPlainShell,
+    shellCommand,
+  };
+}
+
 function readEnvValue(env: NodeJS.ProcessEnv, key: string): string | undefined {
   const resolvedKey = Object.keys(env).find((envKey) => envKey.toLowerCase() === key.toLowerCase());
   return resolvedKey ? env[resolvedKey] : undefined;
@@ -247,10 +387,11 @@ export function handleShellConnection(
         const provider = readString(data.provider, 'claude');
         const initialCommand = readString(data.initialCommand);
         const forceRestart = readBoolean(data.forceRestart);
-        const isPlainShell =
-          readBoolean(data.isPlainShell) ||
-          (!!initialCommand && !hasSession) ||
-          provider === 'plain-shell';
+        const {
+          shell,
+          args: shellArgs,
+          isPlainShell,
+        } = resolveShellSpawn(data, dependencies);
 
         urlDetectionBuffer = '';
         announcedAuthUrls.clear();
@@ -265,7 +406,13 @@ export function handleShellConnection(
           isPlainShell && initialCommand
             ? `_cmd_${Buffer.from(initialCommand).toString('base64').slice(0, 16)}`
             : '';
-        ptySessionKey = `${projectPath}_${sessionId ?? 'default'}${commandSuffix}`;
+        // Keep plain project terminals on a separate PTY key so they never
+        // reconnect into a CLI-backed shell for the same project. Include the
+        // shell basename so switching default shell does not reuse an old PTY.
+        const plainShellKey = path.basename(shell || 'shell').toLowerCase();
+        ptySessionKey = isPlainShell
+          ? `${projectPath}_plain_${plainShellKey}${commandSuffix}`
+          : `${projectPath}_${sessionId ?? 'default'}${commandSuffix}`;
 
         if (isLoginCommand || forceRestart) {
           const oldSession = ptySessionsMap.get(ptySessionKey);
@@ -325,27 +472,27 @@ export function handleShellConnection(
           return;
         }
 
-        const shellCommand = buildShellCommand(data, dependencies);
         const resumeSessionId = resolveResumeSessionId(data, dependencies);
-        const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-        const shellArgs =
-          os.platform() === 'win32' ? ['-Command', shellCommand] : ['-c', shellCommand];
         const termCols = readNumber(data.cols, 80);
         const termRows = readNumber(data.rows, 24);
         const prioritizedPath = prioritizeUserNpmGlobalBin(process.env);
+        const shellEnv: NodeJS.ProcessEnv = {
+          ...process.env,
+          [prioritizedPath.key]: prioritizedPath.value,
+          TERM: 'xterm-256color',
+          COLORTERM: 'truecolor',
+          FORCE_COLOR: '3',
+        };
+        if (isPlainShell && !initialCommand && os.platform() !== 'win32') {
+          shellEnv.SHELL = shell;
+        }
 
         shellProcess = pty.spawn(shell, shellArgs, {
           name: 'xterm-256color',
           cols: termCols,
           rows: termRows,
           cwd: resolvedProjectPath,
-          env: {
-            ...process.env,
-            [prioritizedPath.key]: prioritizedPath.value,
-            TERM: 'xterm-256color',
-            COLORTERM: 'truecolor',
-            FORCE_COLOR: '3',
-          },
+          env: shellEnv,
         });
 
         ptySessionsMap.set(ptySessionKey, {
@@ -462,7 +609,7 @@ export function handleShellConnection(
           shellProcess = null;
         });
 
-        let welcomeMsg = `\x1b[36mStarting terminal in: ${projectPath}\x1b[0m\r\n`;
+        let welcomeMsg = `\x1b[36mStarting ${path.basename(shell)} in: ${projectPath}\x1b[0m\r\n`;
         if (!isPlainShell) {
           const providerName =
             provider === 'cursor'

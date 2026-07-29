@@ -209,6 +209,10 @@ export function normalizeProjectPath(inputPath: string): string {
  * Call this before any filesystem mutation that creates or registers projects.
  * The function resolves symlinks, enforces `WORKSPACES_ROOT` containment, and
  * blocks known system directories.
+ *
+ * Nested system-directory bans are skipped when `WORKSPACES_ROOT` itself lives
+ * inside that tree (for example root's home at `/root`, or a configured root
+ * under `/opt`). Exact system paths still cannot be used as project roots.
  */
 export async function validateWorkspacePath(requestedPath: string): Promise<WorkspacePathValidationResult> {
   try {
@@ -230,8 +234,26 @@ export async function validateWorkspacePath(requestedPath: string): Promise<Work
       };
     }
 
+    let resolvedWorkspaceRoot: string;
+    try {
+      resolvedWorkspaceRoot = normalizeProjectPath(await realpath(WORKSPACES_ROOT));
+    } catch {
+      resolvedWorkspaceRoot = normalizeProjectPath(path.resolve(WORKSPACES_ROOT));
+    }
+
     for (const forbiddenPath of FORBIDDEN_WORKSPACE_PATHS) {
       const normalizedForbiddenPath = normalizeProjectPath(forbiddenPath);
+      const workspaceRootInsideForbidden = (
+        resolvedWorkspaceRoot === normalizedForbiddenPath
+        || resolvedWorkspaceRoot.startsWith(`${normalizedForbiddenPath}${path.sep}`)
+      );
+
+      // When the configured workspace root lives under a system path (e.g. `/root`
+      // or `/opt/...`), allow projects inside that root; containment below still applies.
+      if (workspaceRootInsideForbidden) {
+        continue;
+      }
+
       if (
         normalizedPath === normalizedForbiddenPath
         || normalizedPath.startsWith(`${normalizedForbiddenPath}${path.sep}`)
@@ -273,7 +295,6 @@ export async function validateWorkspacePath(requestedPath: string): Promise<Work
       }
     }
 
-    const resolvedWorkspaceRoot = normalizeProjectPath(await realpath(WORKSPACES_ROOT));
     if (
       !resolvedPath.startsWith(`${resolvedWorkspaceRoot}${path.sep}`)
       && resolvedPath !== resolvedWorkspaceRoot
@@ -306,6 +327,69 @@ export async function validateWorkspacePath(requestedPath: string): Promise<Work
       if (fileError.code !== 'ENOENT') {
         throw fileError;
       }
+    }
+
+    return {
+      valid: true,
+      resolvedPath,
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      error: `Path validation failed: ${(error as Error).message}`,
+    };
+  }
+}
+
+/**
+ * Validates a path for filesystem browsing only.
+ *
+ * Browsing must stay inside `WORKSPACES_ROOT`, but must not apply project-creation
+ * forbidden-directory rules — otherwise opening the folder picker immediately
+ * fails when the workspace root is `/root` or another listed system path.
+ */
+export async function validateBrowsePath(requestedPath: string): Promise<WorkspacePathValidationResult> {
+  try {
+    const normalizedRequestedPath = normalizeProjectPath(requestedPath);
+    if (!normalizedRequestedPath) {
+      return {
+        valid: false,
+        error: 'Path is required',
+      };
+    }
+
+    const absolutePath = path.resolve(normalizedRequestedPath);
+
+    let resolvedWorkspaceRoot: string;
+    try {
+      resolvedWorkspaceRoot = normalizeProjectPath(await realpath(WORKSPACES_ROOT));
+    } catch {
+      resolvedWorkspaceRoot = normalizeProjectPath(path.resolve(WORKSPACES_ROOT));
+    }
+
+    let resolvedPath: string;
+    try {
+      await access(absolutePath);
+      resolvedPath = normalizeProjectPath(await realpath(absolutePath));
+    } catch (error) {
+      const fileError = error as NodeJS.ErrnoException;
+      if (fileError.code === 'ENOENT') {
+        return {
+          valid: false,
+          error: 'Directory not accessible',
+        };
+      }
+      throw fileError;
+    }
+
+    if (
+      !resolvedPath.startsWith(`${resolvedWorkspaceRoot}${path.sep}`)
+      && resolvedPath !== resolvedWorkspaceRoot
+    ) {
+      return {
+        valid: false,
+        error: `Path must be within the allowed workspace root: ${WORKSPACES_ROOT}`,
+      };
     }
 
     return {

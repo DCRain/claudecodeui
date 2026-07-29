@@ -19,7 +19,8 @@
   },
   "tabs": {
     "chat": "聊天",
-    "shell": "終端機",
+    "shell": "CLI 終端機",
+    "terminal": "專案終端機",
     "files": "檔案",
     "git": "版本控制",
     "tasks": "任務",

@@ -20,6 +20,31 @@ import {
 export const OPENCODE_FALLBACK_MODELS: ProviderModelsDefinition = {
   OPTIONS: [
     {
+      value: 'opencode/big-pickle',
+      label: 'Big Pickle',
+      description: 'opencode - opencode/big-pickle',
+    },
+    {
+      value: 'opencode/gpt-5-nano',
+      label: 'GPT-5 Nano',
+      description: 'opencode - opencode/gpt-5-nano',
+    },
+    {
+      value: 'opencode/deepseek-v4-flash-free',
+      label: 'Deepseek V4 Flash Free',
+      description: 'opencode - opencode/deepseek-v4-flash-free',
+    },
+    {
+      value: 'opencode/nemotron-3-super-free',
+      label: 'Nemotron 3 Super Free',
+      description: 'opencode - opencode/nemotron-3-super-free',
+    },
+    {
+      value: 'opencode/minimax-m2.5-free',
+      label: 'Minimax M2.5 Free',
+      description: 'opencode - opencode/minimax-m2.5-free',
+    },
+    {
       value: 'anthropic/claude-sonnet-4-5',
       label: 'Claude Sonnet 4.5',
       description: 'anthropic - anthropic/claude-sonnet-4-5',
@@ -54,7 +79,8 @@ export const OPENCODE_FALLBACK_MODELS: ProviderModelsDefinition = {
 };
 
 const OPEN_CODE_MODELS_TIMEOUT_MS = 20_000;
-const MODEL_ID_LINE = /^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/i;
+// Accept provider/model and provider/org/model style ids from OpenCode CLI output.
+const MODEL_ID_LINE = /^[a-z0-9][a-z0-9._-]*(?:\/[a-z0-9][a-z0-9._-]+)+$/i;
 // cross-spawn resolves .cmd shims/PATHEXT on Windows and delegates to
 // child_process.spawn everywhere else.
 const spawnFunction = crossSpawn;
@@ -68,24 +94,17 @@ type OpenCodeVerboseModel = {
   id?: string;
   name?: string;
   providerID?: string;
+  providerId?: string;
+  provider?: string;
   variants?: Record<string, unknown>;
 };
 
-export const parseOpenCodeModelsStdout = (stdout: string): string[] => {
-  const ids: string[] = [];
-
-  for (const rawLine of stdout.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('{') || line.startsWith('[')) {
-      continue;
-    }
-
-    if (MODEL_ID_LINE.test(line)) {
-      ids.push(line);
-    }
+const pushUniqueModelId = (ids: string[], id: string): void => {
+  if (!MODEL_ID_LINE.test(id) || ids.includes(id)) {
+    return;
   }
 
-  return [...new Set(ids)];
+  ids.push(id);
 };
 
 const countJsonBraceDelta = (value: string): number => {
@@ -128,17 +147,152 @@ const isOpenCodeVerboseModel = (value: unknown): value is OpenCodeVerboseModel =
   return Boolean(record && readOptionalString(record.id));
 };
 
+const readOpenCodeVerboseProviderId = (model: OpenCodeVerboseModel): string | null => (
+  readOptionalString(model.providerID)
+  ?? readOptionalString(model.providerId)
+  ?? readOptionalString(model.provider)
+  ?? null
+);
+
+const readOpenCodeVerboseModelId = (model: OpenCodeVerboseModel): string | null => {
+  const id = readOptionalString(model.id);
+  if (!id) {
+    return null;
+  }
+
+  if (id.includes('/')) {
+    return id;
+  }
+
+  const upstreamProvider = readOpenCodeVerboseProviderId(model);
+  return upstreamProvider ? `${upstreamProvider}/${id}` : id;
+};
+
+const collectModelIdsFromUnknown = (value: unknown, ids: string[]): void => {
+  if (typeof value === 'string') {
+    pushUniqueModelId(ids, value.trim());
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      collectModelIdsFromUnknown(entry, ids);
+    }
+    return;
+  }
+
+  const record = readObjectRecord(value);
+  if (!record) {
+    return;
+  }
+
+  if (Array.isArray(record.models)) {
+    collectModelIdsFromUnknown(record.models, ids);
+  }
+
+  const verboseId = readOpenCodeVerboseModelId(record as OpenCodeVerboseModel);
+  if (verboseId) {
+    pushUniqueModelId(ids, verboseId);
+  }
+};
+
+const collectVerboseModelsFromUnknown = (
+  value: unknown,
+  models: OpenCodeVerboseModel[],
+  seen = new Set<string>(),
+): void => {
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      collectVerboseModelsFromUnknown(entry, models, seen);
+    }
+    return;
+  }
+
+  const record = readObjectRecord(value);
+  if (!record) {
+    return;
+  }
+
+  if (Array.isArray(record.models)) {
+    collectVerboseModelsFromUnknown(record.models, models, seen);
+  }
+
+  if (!isOpenCodeVerboseModel(record)) {
+    return;
+  }
+
+  const modelId = readOpenCodeVerboseModelId(record);
+  if (!modelId || seen.has(modelId)) {
+    return;
+  }
+
+  seen.add(modelId);
+  models.push(record);
+};
+
+export const parseOpenCodeModelsStdout = (stdout: string): string[] => {
+  const ids: string[] = [];
+  const trimmed = stdout.trim();
+
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    try {
+      collectModelIdsFromUnknown(JSON.parse(trimmed), ids);
+      if (ids.length > 0) {
+        return ids;
+      }
+    } catch {
+      // Fall through to the line-oriented parser used by older CLI output.
+    }
+  }
+
+  for (const rawLine of stdout.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('{') || line.startsWith('[')) {
+      continue;
+    }
+
+    pushUniqueModelId(ids, line);
+  }
+
+  return ids;
+};
+
 export const parseOpenCodeVerboseModelsStdout = (stdout: string): OpenCodeVerboseModel[] => {
   const models: OpenCodeVerboseModel[] = [];
+  const trimmed = stdout.trim();
+
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    try {
+      collectVerboseModelsFromUnknown(JSON.parse(trimmed), models);
+      if (models.length > 0) {
+        return models;
+      }
+    } catch {
+      // Fall through to the multi-line verbose object parser.
+    }
+  }
+
   let buffer: string[] = [];
   let depth = 0;
 
   for (const rawLine of stdout.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (buffer.length === 0) {
-      if (line === '{') {
+      if (line.startsWith('{') && line.endsWith('}') && line.length > 1) {
+        try {
+          const parsed = JSON.parse(line);
+          if (isOpenCodeVerboseModel(parsed)) {
+            models.push(parsed);
+          }
+        } catch {
+          // Ignore malformed single-line JSON objects.
+        }
+        continue;
+      }
+
+      if (line === '{' || (line.startsWith('{') && !line.endsWith('}'))) {
         buffer = [rawLine];
-        depth = 1;
+        depth = countJsonBraceDelta(rawLine);
       }
       continue;
     }
@@ -229,22 +383,42 @@ const readOpenCodeModelParts = (id: string): { upstreamProvider: string; slug: s
   };
 };
 
-const isSupportedOpenCodeModelId = (id: string): boolean => (
-  readOpenCodeModelParts(id).upstreamProvider.toLowerCase() !== 'google'
-);
+const isSupportedOpenCodeModelId = (id: string): boolean => {
+  const trimmed = id.trim();
+  return trimmed.includes('/') && trimmed.length > 2;
+};
 
-const readOpenCodeVerboseModelId = (model: OpenCodeVerboseModel): string | null => {
-  const id = readOptionalString(model.id);
-  if (!id) {
-    return null;
+const openCodeModelSortRank = (id: string): number => {
+  const { upstreamProvider, slug } = readOpenCodeModelParts(id);
+  if (upstreamProvider.toLowerCase() !== 'opencode') {
+    return 2;
   }
 
-  if (id.includes('/')) {
-    return id;
+  const normalizedSlug = slug.toLowerCase();
+  if (
+    normalizedSlug.includes('free')
+    || normalizedSlug === 'big-pickle'
+    || normalizedSlug === 'gpt-5-nano'
+  ) {
+    return 0;
   }
 
-  const upstreamProvider = readOptionalString(model.providerID);
-  return upstreamProvider ? `${upstreamProvider}/${id}` : id;
+  return 1;
+};
+
+const sortOpenCodeModelOptions = (options: ProviderModelOption[]): ProviderModelOption[] => {
+  const freeOptions: ProviderModelOption[] = [];
+  const otherOptions: ProviderModelOption[] = [];
+
+  for (const option of options) {
+    if (openCodeModelSortRank(option.value) === 0) {
+      freeOptions.push(option);
+    } else {
+      otherOptions.push(option);
+    }
+  }
+
+  return [...freeOptions, ...otherOptions];
 };
 
 const labelForOpenCodeModelId = (id: string): string => {
@@ -309,13 +483,15 @@ const mapOpenCodeVerboseModel = (model: OpenCodeVerboseModel): ProviderModelOpti
 };
 
 export const buildOpenCodeDefinitionFromIds = (ids: string[]): ProviderModelsDefinition => {
-  const options: ProviderModelOption[] = ids
-    .filter(isSupportedOpenCodeModelId)
-    .map((value) => ({
-      value,
-      label: labelForOpenCodeModelId(value),
-      description: descriptionForOpenCodeModelId(value),
-    }));
+  const options: ProviderModelOption[] = sortOpenCodeModelOptions(
+    ids
+      .filter(isSupportedOpenCodeModelId)
+      .map((value) => ({
+        value,
+        label: labelForOpenCodeModelId(value),
+        description: descriptionForOpenCodeModelId(value),
+      })),
+  );
 
   const defaultValue = options.find((option) => option.value === OPENCODE_FALLBACK_MODELS.DEFAULT)?.value
     ?? options[0]?.value
@@ -347,14 +523,62 @@ export const buildOpenCodeDefinitionFromVerboseModels = (
     return OPENCODE_FALLBACK_MODELS;
   }
 
-  const defaultValue = options.find((option) => option.value === OPENCODE_FALLBACK_MODELS.DEFAULT)?.value
-    ?? options[0]?.value
+  const sortedOptions = sortOpenCodeModelOptions(options);
+  const defaultValue = sortedOptions.find((option) => option.value === OPENCODE_FALLBACK_MODELS.DEFAULT)?.value
+    ?? sortedOptions[0]?.value
     ?? OPENCODE_FALLBACK_MODELS.DEFAULT;
 
   return {
-    OPTIONS: options,
+    OPTIONS: sortedOptions,
     DEFAULT: defaultValue,
   };
+};
+
+export const mergeOpenCodeDefinitionWithIds = (
+  definition: ProviderModelsDefinition,
+  ids: string[],
+): ProviderModelsDefinition => {
+  const options = [...definition.OPTIONS];
+  const seenValues = new Set(options.map((option) => option.value));
+
+  for (const id of ids) {
+    if (!isSupportedOpenCodeModelId(id) || seenValues.has(id)) {
+      continue;
+    }
+
+    seenValues.add(id);
+    options.push({
+      value: id,
+      label: labelForOpenCodeModelId(id),
+      description: descriptionForOpenCodeModelId(id),
+    });
+  }
+
+  const sortedOptions = sortOpenCodeModelOptions(options);
+  const defaultValue = sortedOptions.find((option) => option.value === definition.DEFAULT)?.value
+    ?? sortedOptions.find((option) => option.value === OPENCODE_FALLBACK_MODELS.DEFAULT)?.value
+    ?? sortedOptions[0]?.value
+    ?? OPENCODE_FALLBACK_MODELS.DEFAULT;
+
+  return {
+    OPTIONS: sortedOptions,
+    DEFAULT: defaultValue,
+  };
+};
+
+/**
+ * OpenCode Zen free models are not always present in `opencode models` output
+ * (for example when Zen auth is missing or the CLI only lists configured paid
+ * providers). Always surface the known free options so the UI can select them.
+ */
+export const ensureOpenCodeFreeModels = (
+  definition: ProviderModelsDefinition,
+): ProviderModelsDefinition => {
+  const freeModelIds = OPENCODE_FALLBACK_MODELS.OPTIONS
+    .filter((option) => openCodeModelSortRank(option.value) === 0)
+    .map((option) => option.value);
+
+  return mergeOpenCodeDefinitionWithIds(definition, freeModelIds);
 };
 
 const parseOpenCodeSessionModelValue = (rawModel: unknown): string | null => {
@@ -443,17 +667,23 @@ export class OpenCodeProviderModels implements IProviderModels {
   async getSupportedModels(): Promise<ProviderModelsDefinition> {
     try {
       const stdout = await runOpenCodeModelsCommand();
+      const ids = parseOpenCodeModelsStdout(stdout);
       const verboseModels = parseOpenCodeVerboseModelsStdout(stdout);
+
       if (verboseModels.length > 0) {
-        return buildOpenCodeDefinitionFromVerboseModels(verboseModels);
+        return ensureOpenCodeFreeModels(
+          mergeOpenCodeDefinitionWithIds(
+            buildOpenCodeDefinitionFromVerboseModels(verboseModels),
+            ids,
+          ),
+        );
       }
 
-      const ids = parseOpenCodeModelsStdout(stdout);
       if (ids.length === 0) {
         return OPENCODE_FALLBACK_MODELS;
       }
 
-      return buildOpenCodeDefinitionFromIds(ids);
+      return ensureOpenCodeFreeModels(buildOpenCodeDefinitionFromIds(ids));
     } catch {
       return OPENCODE_FALLBACK_MODELS;
     }

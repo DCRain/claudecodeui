@@ -11,6 +11,7 @@ import type { InstallMode } from '../../../../hooks/useVersionCheck';
 import { normalizeProjectForSettings } from '../../utils/utils';
 import type { DeleteProjectConfirmation, SessionDeleteConfirmation, SettingsProject } from '../../types/types';
 import ProjectCreationWizard from '../../../project-creation-wizard';
+import OpenProjectModal from '../../../open-project-modal';
 
 type SidebarModalsProps = {
   projects: Project[];
@@ -18,6 +19,8 @@ type SidebarModalsProps = {
   settingsInitialTab: string;
   onCloseSettings: () => void;
   showNewProject: boolean;
+  showOpenProject: boolean;
+  onCloseOpenProject: () => void;
   onCloseNewProject: () => void;
   onProjectCreated: () => void;
   deleteConfirmation: DeleteProjectConfirmation | null;
@@ -54,6 +57,8 @@ export default function SidebarModals({
   settingsInitialTab,
   onCloseSettings,
   showNewProject,
+  showOpenProject,
+  onCloseOpenProject,
   onCloseNewProject,
   onProjectCreated,
   deleteConfirmation,
@@ -83,6 +88,15 @@ export default function SidebarModals({
           <ProjectCreationWizard
             onClose={onCloseNewProject}
             onProjectCreated={onProjectCreated}
+          />,
+          document.body,
+        )}
+
+      {showOpenProject &&
+        ReactDOM.createPortal(
+          <OpenProjectModal
+            onClose={onCloseOpenProject}
+            onProjectOpened={onProjectCreated}
           />,
           document.body,
         )}

@@ -19,7 +19,8 @@
   },
   "tabs": {
     "chat": "Chat",
-    "shell": "Terminal",
+    "shell": "CLI-Terminal",
+    "terminal": "Terminal",
     "files": "Dateien",
     "git": "Quellcodeverwaltung",
     "tasks": "Aufgaben",

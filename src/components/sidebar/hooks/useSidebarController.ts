@@ -120,6 +120,7 @@ export function useSidebarController({
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
+  const [showOpenProject, setShowOpenProject] = useState(false);
   const [editingName, setEditingName] = useState('');
   const [initialSessionsLoaded, setInitialSessionsLoaded] = useState<Set<string>>(new Set());
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -931,6 +932,7 @@ export function useSidebarController({
     expandedProjects,
     editingProject,
     showNewProject,
+    showOpenProject,
     editingName,
     initialSessionsLoaded,
     currentTime,
@@ -972,6 +974,7 @@ export function useSidebarController({
     collapseSidebar,
     expandSidebar,
     setShowNewProject,
+    setShowOpenProject,
     setEditingName,
     setEditingSession,
     setEditingSessionName,

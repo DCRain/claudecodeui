@@ -14,7 +14,7 @@ import cors from 'cors';
 import mime from 'mime-types';
 import Database from 'better-sqlite3';
 
-import { AppError, WORKSPACES_ROOT, getOpenCodeDatabasePath, validateWorkspacePath } from '@/shared/utils.js';
+import { AppError, WORKSPACES_ROOT, getOpenCodeDatabasePath, validateBrowsePath, validateWorkspacePath } from '@/shared/utils.js';
 import { closeSessionsWatcher, initializeSessionsWatcher } from '@/modules/providers/index.js';
 import { createWebSocketServer } from '@/modules/websocket/index.js';
 
@@ -342,8 +342,10 @@ app.get('/api/browse-filesystem', authenticateToken, async (req, res) => {
         // Resolve and normalize the path
         targetPath = path.resolve(targetPath);
 
-        // Security check - ensure path is within allowed workspace root
-        const validation = await validateWorkspacePath(targetPath);
+        // Browse must stay inside WORKSPACES_ROOT, but must not use project-creation
+        // forbidden-directory rules — otherwise the picker fails immediately when the
+        // workspace root is `/root` or another listed system path.
+        const validation = await validateBrowsePath(targetPath);
         if (!validation.valid) {
             return res.status(403).json({ error: validation.error });
         }

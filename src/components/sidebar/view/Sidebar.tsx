@@ -59,6 +59,7 @@ function Sidebar({
     expandedProjects,
     editingProject,
     showNewProject,
+    showOpenProject,
     editingName,
     initialSessionsLoaded,
     currentTime,
@@ -105,6 +106,7 @@ function Sidebar({
     collapseSidebar: handleCollapseSidebar,
     expandSidebar: handleExpandSidebar,
     setShowNewProject,
+    setShowOpenProject,
     setEditingName,
     setEditingSession,
     setEditingSessionName,
@@ -204,7 +206,9 @@ function Sidebar({
         settingsInitialTab={settingsInitialTab}
         onCloseSettings={onCloseSettings}
         showNewProject={showNewProject}
+        showOpenProject={showOpenProject}
         onCloseNewProject={() => setShowNewProject(false)}
+        onCloseOpenProject={() => setShowOpenProject(false)}
         onProjectCreated={handleProjectCreated}
         deleteConfirmation={deleteConfirmation}
         onCancelDeleteProject={() => setDeleteConfirmation(null)}
@@ -297,6 +301,7 @@ function Sidebar({
             }}
             isRefreshing={isRefreshing}
             onCreateProject={() => setShowNewProject(true)}
+            onOpenProject={() => setShowOpenProject(true)}
             onCollapseSidebar={handleCollapseSidebar}
             updateAvailable={updateAvailable}
             restartRequired={restartRequired}
