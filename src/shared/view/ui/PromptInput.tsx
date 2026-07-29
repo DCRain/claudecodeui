@@ -54,6 +54,68 @@ export const PromptInput = React.forwardRef<HTMLFormElement, PromptInputProps>(
 );
 PromptInput.displayName = 'PromptInput';
 
+/* ─── PromptInputResizeHandle ─────────────────────────────────────── */
+
+export const PromptInputResizeHandle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  }
+>(({ textareaRef, className, ...props }, ref) => {
+  const isDragging = React.useRef(false);
+  const startY = React.useRef(0);
+  const startHeight = React.useRef(0);
+
+  const onMouseDown = React.useCallback((e: React.MouseEvent) => {
+    isDragging.current = true;
+    startY.current = e.clientY;
+    startHeight.current = textareaRef.current?.clientHeight ?? 0;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  }, [textareaRef]);
+
+  React.useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = startY.current - e.clientY;
+      const newHeight = Math.max(44, startHeight.current + delta);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = `${newHeight}px`;
+      }
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [textareaRef]);
+
+  return (
+    <div
+      ref={ref}
+      onMouseDown={onMouseDown}
+      className={cn(
+        'flex h-2 cursor-ns-resize items-center justify-center hover:bg-accent/30 active:bg-accent/50 transition-colors',
+        className
+      )}
+      {...props}
+    >
+      <div className="h-0.5 w-8 rounded-full bg-border/40" />
+    </div>
+  );
+});
+PromptInputResizeHandle.displayName = 'PromptInputResizeHandle';
+
 /* ─── PromptInputHeader ──────────────────────────────────────────── */
 
 export const PromptInputHeader = React.forwardRef<
@@ -94,7 +156,7 @@ export const PromptInputTextarea = React.forwardRef<
     ref={ref}
     data-slot="prompt-input-textarea"
     className={cn(
-      'chat-input-placeholder block max-h-[40vh] w-full resize-none overflow-y-auto bg-transparent px-4 py-2 text-sm leading-6 text-foreground placeholder-muted-foreground/50 focus:outline-none sm:max-h-[300px]',
+      'chat-input-placeholder block max-h-[80vh] w-full resize-none overflow-y-auto bg-transparent px-4 py-2 text-sm leading-6 text-foreground placeholder-muted-foreground/50 focus:outline-none sm:max-h-[600px]',
       className
     )}
     {...props}

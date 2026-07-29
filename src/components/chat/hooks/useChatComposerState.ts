@@ -498,9 +498,11 @@ export function useChatComposerState({
   }, []);
 
   const resizeTextarea = useCallback((target: HTMLTextAreaElement) => {
+    const prevHeight = target.clientHeight;
     target.style.height = 'auto';
     const nextHeight = Math.max(22, target.scrollHeight);
-    target.style.height = `${nextHeight}px`;
+    const finalHeight = Math.max(nextHeight, prevHeight);
+    target.style.height = `${finalHeight}px`;
 
     let lineHeight = textareaLineHeightRef.current;
     if (!lineHeight) {
@@ -508,7 +510,7 @@ export function useChatComposerState({
       textareaLineHeightRef.current = Number.isFinite(lineHeight) ? lineHeight : 24;
     }
 
-    const expanded = nextHeight > (textareaLineHeightRef.current || 24) * 2;
+    const expanded = finalHeight > (textareaLineHeightRef.current || 24) * 2;
     setIsTextareaExpanded((previous) => previous === expanded ? previous : expanded);
     lastAutosizedInputRef.current = target.value;
   }, []);
