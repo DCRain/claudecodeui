@@ -23,9 +23,12 @@ import type {
   AnyRecord,
   ApiSuccessShape,
   AppErrorOptions,
+  LLMProvider,
   NormalizedMessage,
+  ProviderChangeActiveModelInput,
   ProviderCurrentActiveModel,
   ProviderModelsDefinition,
+  ProviderSessionActiveModelChange,
   ProviderSkillSource,
   WorkspacePathValidationResult,
 } from '@/shared/types.js';
@@ -594,6 +597,21 @@ export function buildDefaultProviderCurrentActiveModel(
 ): ProviderCurrentActiveModel {
   return {
     model: models.DEFAULT,
+  };
+}
+
+/**
+ * Writes a provider session active model change record from the given input.
+ */
+export function writeProviderSessionActiveModelChange(
+  provider: LLMProvider,
+  input: ProviderChangeActiveModelInput,
+): ProviderSessionActiveModelChange {
+  return {
+    provider,
+    sessionId: input.sessionId || '',
+    previousModel: input.model,
+    newModel: input.model,
   };
 }
 

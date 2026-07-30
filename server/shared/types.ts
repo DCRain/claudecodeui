@@ -118,6 +118,24 @@ export type ProviderModelsResult = {
 };
 
 // ---------------------------
+/**
+ * Input accepted by `changeActiveModel` on provider model adapters.
+ */
+export type ProviderChangeActiveModelInput = {
+  sessionId?: string;
+  model: string;
+};
+
+/**
+ * Result returned by `changeActiveModel` on provider model adapters.
+ */
+export type ProviderSessionActiveModelChange = {
+  provider: LLMProvider;
+  sessionId: string;
+  previousModel: string;
+  newModel: string;
+};
+
 //----------------- PROVIDER ACTIVE MODEL TYPES ------------
 /**
  * Provider-neutral result for the model that is actively driving a session or

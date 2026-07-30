@@ -146,6 +146,7 @@ async function spawnOpenCode(command, options = {}, ws, context) {
     let capturedSessionId = providerSessionId;
     let sessionCreatedSent = false;
     let stdoutLineBuffer = '';
+    let stderrBuffer = '';
     let terminalNotificationSent = false;
     let opencodeProcess = null;
     // Unified lifecycle contract: exactly one terminal `complete` per run
@@ -313,6 +314,10 @@ async function spawnOpenCode(command, options = {}, ws, context) {
           return;
         }
 
+        // Buffer recent stderr lines so we can include them in the error message
+        // when the CLI exits with a non-zero code.
+        stderrBuffer = (stderrBuffer + '\n' + stderrText).slice(-2000);
+
         ws.send(createNormalizedMessage({
           kind: 'error',
           content: stderrText,
@@ -362,6 +367,26 @@ async function spawnOpenCode(command, options = {}, ws, context) {
             ws.send(createNormalizedMessage({
               kind: 'error',
               content: 'OpenCode CLI is not installed. Install it from https://opencode.ai/docs/',
+              sessionId: finalSessionId,
+              provider: 'opencode',
+            }));
+          }
+        } else if (code !== 0) {
+          const installed = await context.isProviderInstalled();
+          if (!installed) {
+            ws.send(createNormalizedMessage({
+              kind: 'error',
+              content: 'OpenCode CLI is not installed. Install it from https://opencode.ai/docs/',
+              sessionId: finalSessionId,
+              provider: 'opencode',
+            }));
+          } else {
+            const stderrDetail = stderrBuffer.trim()
+              ? `\n${stderrBuffer.trim().slice(-500)}`
+              : '';
+            ws.send(createNormalizedMessage({
+              kind: 'error',
+              content: `OpenCode CLI exited with code ${code}. Check your OpenCode configuration and API key.${stderrDetail}`,
               sessionId: finalSessionId,
               provider: 'opencode',
             }));

@@ -278,13 +278,19 @@ export class OpenCodeSessionsProvider implements IProviderSessions {
     }
 
     if (type === 'error') {
+      const errorContent = readOptionalString(raw.error)
+        ?? readOptionalString(raw.message)
+        ?? readOptionalString(raw.description)
+        ?? readOptionalString(raw.detail);
+      const fallback = errorContent
+        ?? `OpenCode error: ${JSON.stringify(raw).slice(0, 500)}`;
       return [createNormalizedMessage({
         id: baseId,
         sessionId: eventSessionId,
         timestamp,
         provider: PROVIDER,
         kind: 'error',
-        content: readOptionalString(raw.error) ?? readOptionalString(raw.message) ?? 'Unknown OpenCode error',
+        content: fallback,
       })];
     }
 

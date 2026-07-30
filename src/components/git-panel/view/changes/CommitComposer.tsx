@@ -1,4 +1,4 @@
-import { Check, ChevronDown, GitCommit } from 'lucide-react';
+import { Check, ChevronDown, GitCommit, Shield } from 'lucide-react';
 import { useState } from 'react';
 import type { ConfirmationRequest } from '../../types/types';
 

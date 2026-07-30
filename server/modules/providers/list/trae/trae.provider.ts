@@ -1,6 +1,7 @@
 import { TraeProviderAuth } from '@/modules/providers/list/trae/trae-auth.provider.js';
 import { TraeProviderModels } from '@/modules/providers/list/trae/trae-models.provider.js';
 import { TraeMcpProvider } from '@/modules/providers/list/trae/trae-mcp.provider.js';
+import { traeRuntime } from '@/modules/providers/list/trae/trae-runtime.provider.js';
 import { TraeSessionSynchronizer } from '@/modules/providers/list/trae/trae-session-synchronizer.provider.js';
 import { TraeSessionsProvider } from '@/modules/providers/list/trae/trae-sessions.provider.js';
 import { TraeSkillsProvider } from '@/modules/providers/list/trae/trae-skills.provider.js';
@@ -8,12 +9,14 @@ import { AbstractProvider } from '@/modules/providers/shared/base/abstract.provi
 import type {
   IProviderAuth,
   IProviderModels,
+  IProviderRuntime,
   IProviderSessionSynchronizer,
   IProviderSkills,
   IProviderSessions,
 } from '@/shared/interfaces.js';
 
 export class TraeProvider extends AbstractProvider {
+  readonly runtime: IProviderRuntime = traeRuntime;
   readonly models: IProviderModels = new TraeProviderModels();
   readonly mcp = new TraeMcpProvider();
   readonly auth: IProviderAuth = new TraeProviderAuth();
