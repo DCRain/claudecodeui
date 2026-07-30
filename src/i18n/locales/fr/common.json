@@ -266,5 +266,27 @@
       "updateAvailable": "Mise à jour disponible",
       "closeSidebar": "Masquer la barre latérale"
     }
+  },
+  "customCommands": {
+    "title": "Commandes personnalisées",
+    "add": "Ajouter",
+    "namePlaceholder": "Nom de la commande",
+    "commandPlaceholder": "Commande (ex: npm run build)",
+    "save": "Enregistrer",
+    "update": "Mettre à jour",
+    "cancel": "Annuler",
+    "execute": "Exécuter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "noCommands": "Aucune commande personnalisée. Cliquez sur « Ajouter » pour en créer une.",
+    "running": "(en cours...)",
+    "processExitedSuccess": "✓ Processus terminé avec succès, code 0",
+    "processExitedFailed": "✗ Processus terminé avec erreur, code {{code}}",
+    "error": "Erreur: {{message}}",
+    "confirmExecute": "Exécuter {{name}} ?",
+    "confirmDelete": "Supprimer {{name}} ?",
+    "deleteWarning": "Cette action est irréversible.",
+    "terminate": "Arrêter",
+    "close": "Fermer"
   }
 }

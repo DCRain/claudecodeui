@@ -3,6 +3,7 @@ import type { MainContentHeaderProps } from '../../types/types';
 import MobileMenuButton from './MobileMenuButton';
 import MainContentTabSwitcher from './MainContentTabSwitcher';
 import MainContentTitle from './MainContentTitle';
+import CustomCommands from '../../../custom-commands/CustomCommands';
 
 export default function MainContentHeader({
   activeTab,
@@ -67,6 +68,10 @@ export default function MainContentHeader({
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent" />
           )}
         </div>
+
+        {selectedProject && (
+          <CustomCommands projectId={selectedProject.projectId} />
+        )}
       </div>
     </div>
   );

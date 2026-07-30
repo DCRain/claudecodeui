@@ -266,5 +266,27 @@
       "updateAvailable": "アップデートあり",
       "closeSidebar": "サイドバーを閉じる"
     }
+  },
+  "customCommands": {
+    "title": "カスタムコマンド",
+    "add": "追加",
+    "namePlaceholder": "コマンド名",
+    "commandPlaceholder": "コマンド (例: npm run build)",
+    "save": "保存",
+    "update": "更新",
+    "cancel": "キャンセル",
+    "execute": "実行",
+    "edit": "編集",
+    "delete": "削除",
+    "noCommands": "カスタムコマンドがありません。「追加」をクリックして作成してください。",
+    "running": "(実行中...)",
+    "processExitedSuccess": "✓ プロセス正常終了、コード 0",
+    "processExitedFailed": "✗ プロセス異常終了、コード {{code}}",
+    "error": "エラー: {{message}}",
+    "confirmExecute": "{{name}} を実行しますか？",
+    "confirmDelete": "{{name}} を削除しますか？",
+    "deleteWarning": "この操作は取り消せません。",
+    "terminate": "停止",
+    "close": "閉じる"
   }
 }

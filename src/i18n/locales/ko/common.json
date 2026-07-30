@@ -266,5 +266,27 @@
       "updateAvailable": "업데이트 가능",
       "closeSidebar": "사이드바 닫기"
     }
+  },
+  "customCommands": {
+    "title": "사용자 지정 명령",
+    "add": "추가",
+    "namePlaceholder": "명령 이름",
+    "commandPlaceholder": "명령 (예: npm run build)",
+    "save": "저장",
+    "update": "업데이트",
+    "cancel": "취소",
+    "execute": "실행",
+    "edit": "편집",
+    "delete": "삭제",
+    "noCommands": "사용자 지정 명령이 없습니다. \"추가\"를 클릭하여 만드세요.",
+    "running": "(실행 중...)",
+    "processExitedSuccess": "✓ 프로세스 정상 종료, 코드 0",
+    "processExitedFailed": "✗ 프로세스 비정상 종료, 코드 {{code}}",
+    "error": "오류: {{message}}",
+    "confirmExecute": "{{name}}을(를) 실행하시겠습니까?",
+    "confirmDelete": "{{name}}을(를) 삭제하시겠습니까?",
+    "deleteWarning": "이 작업은 되돌릴 수 없습니다.",
+    "terminate": "중지",
+    "close": "닫기"
   }
 }

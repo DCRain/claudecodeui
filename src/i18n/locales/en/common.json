@@ -266,5 +266,27 @@
       "updateAvailable": "Update available",
       "closeSidebar": "Close sidebar"
     }
+  },
+  "customCommands": {
+    "title": "Custom Commands",
+    "add": "Add",
+    "namePlaceholder": "Command name",
+    "commandPlaceholder": "Command (e.g. npm run build)",
+    "save": "Save",
+    "update": "Update",
+    "cancel": "Cancel",
+    "execute": "Execute",
+    "edit": "Edit",
+    "delete": "Delete",
+    "noCommands": "No custom commands yet. Click \"Add\" to create one.",
+    "running": "(running...)",
+    "processExitedSuccess": "✓ Process exited with code 0",
+    "processExitedFailed": "✗ Process exited with code {{code}}",
+    "error": "Error: {{message}}",
+    "confirmExecute": "Execute \"{{name}}\"?",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "deleteWarning": "This action cannot be undone.",
+    "terminate": "Stop",
+    "close": "Close"
   }
 }

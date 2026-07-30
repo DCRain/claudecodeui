@@ -236,5 +236,27 @@
       "updateAvailable": "Update verfügbar",
       "closeSidebar": "Seitenleiste schließen"
     }
+  },
+  "customCommands": {
+    "title": "Benutzerdefinierte Befehle",
+    "add": "Hinzufügen",
+    "namePlaceholder": "Befehlsname",
+    "commandPlaceholder": "Befehl (z.B. npm run build)",
+    "save": "Speichern",
+    "update": "Aktualisieren",
+    "cancel": "Abbrechen",
+    "execute": "Ausführen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "noCommands": "Keine benutzerdefinierten Befehle. Klicken Sie auf „Hinzufügen“, um einen zu erstellen.",
+    "running": "(läuft...)",
+    "processExitedSuccess": "✓ Prozess erfolgreich beendet, Code 0",
+    "processExitedFailed": "✗ Prozess fehlerhaft beendet, Code {{code}}",
+    "error": "Fehler: {{message}}",
+    "confirmExecute": "{{name}} ausführen?",
+    "confirmDelete": "{{name}} löschen?",
+    "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "terminate": "Stoppen",
+    "close": "Schließen"
   }
 }

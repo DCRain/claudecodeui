@@ -45,7 +45,11 @@ const authenticateToken = async (req, res, next) => {
 
   // Also check query param for SSE endpoints (EventSource can't set headers)
   if (!token && req.query.token) {
-    token = req.query.token;
+    const queryToken = req.query.token;
+    token = Array.isArray(queryToken) ? queryToken[0] : queryToken;
+    if (typeof token !== 'string') {
+      token = null;
+    }
   }
 
   if (!token) {

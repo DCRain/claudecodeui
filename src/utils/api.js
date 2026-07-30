@@ -361,4 +361,35 @@ export const api = {
     method: 'DELETE',
     ...options,
   }),
+
+  // Custom commands
+  customCommands: {
+    list: (projectId) =>
+      authenticatedFetch(`/api/custom-commands?project=${encodeURIComponent(projectId)}`),
+    create: (projectId, name, command, sortOrder = 0) =>
+      authenticatedFetch('/api/custom-commands', {
+        method: 'POST',
+        body: JSON.stringify({ projectId, name, command, sortOrder }),
+      }),
+    update: (id, data) =>
+      authenticatedFetch(`/api/custom-commands/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    delete: (id) =>
+      authenticatedFetch(`/api/custom-commands/${id}`, {
+        method: 'DELETE',
+      }),
+    // Prefer Authorization header via authenticatedFetch — EventSource cannot
+    // set headers and would 401 + auto-reconnect in a loop without ?token=.
+    execute: (id, options = {}) =>
+      authenticatedFetch(`/api/custom-commands/${id}/execute`, {
+        ...options,
+        method: 'GET',
+        headers: {
+          Accept: 'text/event-stream',
+          ...(options.headers || {}),
+        },
+      }),
+  },
 };

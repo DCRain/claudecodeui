@@ -236,5 +236,27 @@
       "updateAvailable": "Доступно обновление",
       "closeSidebar": "Закрыть боковую панель"
     }
+  },
+  "customCommands": {
+    "title": "Пользовательские команды",
+    "add": "Добавить",
+    "namePlaceholder": "Имя команды",
+    "commandPlaceholder": "Команда (напр. npm run build)",
+    "save": "Сохранить",
+    "update": "Обновить",
+    "cancel": "Отмена",
+    "execute": "Выполнить",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "noCommands": "Нет пользовательских команд. Нажмите «Добавить», чтобы создать.",
+    "running": "(выполняется...)",
+    "processExitedSuccess": "✓ Процесс завершён успешно, код 0",
+    "processExitedFailed": "✗ Процесс завершён с ошибкой, код {{code}}",
+    "error": "Ошибка: {{message}}",
+    "confirmExecute": "Выполнить {{name}}?",
+    "confirmDelete": "Удалить {{name}}?",
+    "deleteWarning": "Это действие нельзя отменить.",
+    "terminate": "Остановить",
+    "close": "Закрыть"
   }
 }

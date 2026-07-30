@@ -266,5 +266,27 @@
       "updateAvailable": "Güncelleme mevcut",
       "closeSidebar": "Kenar çubuğunu kapat"
     }
+  },
+  "customCommands": {
+    "title": "Özel komutlar",
+    "add": "Ekle",
+    "namePlaceholder": "Komut adı",
+    "commandPlaceholder": "Komut (ör. npm run build)",
+    "save": "Kaydet",
+    "update": "Güncelle",
+    "cancel": "İptal",
+    "execute": "Çalıştır",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "noCommands": "Henüz özel komut yok. Oluşturmak için \"Ekle\"ye tıklayın.",
+    "running": "(çalıştıyor...)",
+    "processExitedSuccess": "✓ Süreç başarıyla sonlandı, kod 0",
+    "processExitedFailed": "✗ Süreç hata ile sonlandı, kod {{code}}",
+    "error": "Hata: {{message}}",
+    "confirmExecute": "{{name}} çalıştırılsın mı?",
+    "confirmDelete": "{{name}} silinsin mi?",
+    "deleteWarning": "Bu geri alınamaz.",
+    "terminate": "Durdur",
+    "close": "Kapat"
   }
 }
