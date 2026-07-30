@@ -1,4 +1,4 @@
-import { Check, ChevronDown, GitCommit, RefreshCw, Shield, Sparkles } from 'lucide-react';
+import { Check, ChevronDown, GitCommit } from 'lucide-react';
 import { useState } from 'react';
 import type { ConfirmationRequest } from '../../types/types';
 
@@ -10,8 +10,7 @@ type CommitComposerProps = {
   projectPath: string;
   selectedFileCount: number;
   isHidden: boolean;
-  onCommit: (message: string, noVerify?: boolean) => Promise<boolean>;
-  onGenerateMessage: () => Promise<string | null>;
+  onCommit: (message: string) => Promise<boolean>;
   onRequestConfirmation: (request: ConfirmationRequest) => void;
   error?: string;
   onClearError?: () => void;
@@ -23,7 +22,6 @@ export default function CommitComposer({
   selectedFileCount,
   isHidden,
   onCommit,
-  onGenerateMessage,
   onRequestConfirmation,
   error,
   onClearError,
@@ -43,7 +41,6 @@ export default function CommitComposer({
   };
 
   const [isCommitting, setIsCommitting] = useState(false);
-  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(isMobile);
   const [noVerify, setNoVerify] = useState(true);
 
@@ -62,22 +59,6 @@ export default function CommitComposer({
       return success;
     } finally {
       setIsCommitting(false);
-    }
-  };
-
-  const handleGenerateMessage = async () => {
-    if (selectedFileCount === 0 || isGeneratingMessage) {
-      return;
-    }
-
-    setIsGeneratingMessage(true);
-    try {
-      const generatedMessage = await onGenerateMessage();
-      if (generatedMessage) {
-        setCommitMessage(generatedMessage);
-      }
-    } finally {
-      setIsGeneratingMessage(false);
     }
   };
 
@@ -127,35 +108,19 @@ export default function CommitComposer({
             </div>
           )}
 
-          <div className="relative">
-            <textarea
-              value={commitMessage}
-              onChange={(event) => setCommitMessage(event.target.value)}
-              placeholder="Message (Ctrl+Enter to commit)"
-              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 pr-20 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
-              rows={3}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-                  event.preventDefault();
-                  void handleCommit();
-                }
-              }}
-            />
-            <div className="absolute right-2 top-2 flex gap-1">
-              <button
-                onClick={() => void handleGenerateMessage()}
-                disabled={selectedFileCount === 0 || isGeneratingMessage}
-                className="p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                title="Generate commit message"
-              >
-                {isGeneratingMessage ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
+          <textarea
+            value={commitMessage}
+            onChange={(event) => setCommitMessage(event.target.value)}
+            placeholder="Message (Ctrl+Enter to commit)"
+            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            rows={3}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                void handleCommit();
+              }
+            }}
+          />
 
           <label className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
             <input
