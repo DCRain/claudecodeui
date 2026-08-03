@@ -345,9 +345,10 @@ export async function validateWorkspacePath(requestedPath: string): Promise<Work
 /**
  * Validates a path for filesystem browsing only.
  *
- * Browsing must stay inside `WORKSPACES_ROOT`, but must not apply project-creation
- * forbidden-directory rules — otherwise opening the folder picker immediately
- * fails when the workspace root is `/root` or another listed system path.
+ * Unlike project-creation validation, browsing does NOT enforce WORKSPACES_ROOT
+ * containment or forbidden-directory rules — the folder picker must let users
+ * navigate the filesystem freely to locate an existing project directory.
+ * Only basic accessibility (path exists, is readable) is checked.
  */
 export async function validateBrowsePath(requestedPath: string): Promise<WorkspacePathValidationResult> {
   try {
@@ -360,13 +361,6 @@ export async function validateBrowsePath(requestedPath: string): Promise<Workspa
     }
 
     const absolutePath = path.resolve(normalizedRequestedPath);
-
-    let resolvedWorkspaceRoot: string;
-    try {
-      resolvedWorkspaceRoot = normalizeProjectPath(await realpath(WORKSPACES_ROOT));
-    } catch {
-      resolvedWorkspaceRoot = normalizeProjectPath(path.resolve(WORKSPACES_ROOT));
-    }
 
     let resolvedPath: string;
     try {
@@ -381,16 +375,6 @@ export async function validateBrowsePath(requestedPath: string): Promise<Workspa
         };
       }
       throw fileError;
-    }
-
-    if (
-      !resolvedPath.startsWith(`${resolvedWorkspaceRoot}${path.sep}`)
-      && resolvedPath !== resolvedWorkspaceRoot
-    ) {
-      return {
-        valid: false,
-        error: `Path must be within the allowed workspace root: ${WORKSPACES_ROOT}`,
-      };
     }
 
     return {

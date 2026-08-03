@@ -66,6 +66,7 @@ function createDependencies(
     workspace: {
       rootPath: projectRoot,
       validatePath: async (candidatePath) => ({ valid: true, resolvedPath: candidatePath }),
+      validateBrowsePath: async (candidatePath) => ({ valid: true, resolvedPath: candidatePath }),
     },
     resolveMimeType: () => 'text/plain',
     fileSystemConcurrency: 4,

@@ -269,7 +269,7 @@ export function createFileTreeService(dependencies: FileTreeServiceDependencies)
         ? expandWorkspacePath(dependencies.workspace.rootPath, inputPath)
         : dependencies.workspace.rootPath;
       const targetPath = path.resolve(requestedPath);
-      const validation = await dependencies.workspace.validatePath(targetPath);
+      const validation = await dependencies.workspace.validateBrowsePath(targetPath);
       if (!validation.valid) {
         throw createFileTreeError(validation.error ?? 'Path is outside the workspace root', 403, 'INVALID_WORKSPACE_PATH');
       }

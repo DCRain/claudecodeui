@@ -993,6 +993,7 @@ export type FileTreeProjectGateway = {
 export type FileTreeWorkspaceGateway = {
   rootPath: string;
   validatePath(candidatePath: string): Promise<WorkspacePathValidationResult>;
+  validateBrowsePath(candidatePath: string): Promise<WorkspacePathValidationResult>;
 };
 
 /**
