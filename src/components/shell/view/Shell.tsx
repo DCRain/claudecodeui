@@ -19,6 +19,7 @@ import ShellConnectionOverlay from './subcomponents/ShellConnectionOverlay';
 import ShellEmptyState from './subcomponents/ShellEmptyState';
 import ShellHeader from './subcomponents/ShellHeader';
 import ShellMinimalView from './subcomponents/ShellMinimalView';
+import TerminalCommandInput from './subcomponents/TerminalCommandInput';
 import TerminalShortcutsPanel from './subcomponents/TerminalShortcutsPanel';
 
 type CliPromptOption = { number: string; label: string };
@@ -32,6 +33,7 @@ type ShellProps = {
   minimal?: boolean;
   autoConnect?: boolean;
   isActive?: boolean;
+  clientTerminalId?: string | null;
 };
 
 export default function Shell({
@@ -43,6 +45,7 @@ export default function Shell({
   minimal = false,
   autoConnect = false,
   isActive = true,
+  clientTerminalId = null,
 }: ShellProps) {
   const { t } = useTranslation('chat');
   const [isRestarting, setIsRestarting] = useState(false);
@@ -71,6 +74,7 @@ export default function Shell({
     isRestarting,
     onProcessComplete,
     onOutputRef,
+    clientTerminalId,
   });
 
   // Check xterm.js buffer for CLI prompt patterns (❯ N. label)
@@ -161,7 +165,18 @@ export default function Shell({
     }
 
     const focusTerminal = () => {
-      terminalRef.current?.focus();
+      const terminal = terminalRef.current;
+      if (!terminal) {
+        return;
+      }
+
+      // Refit after becoming visible — hidden/zero-size mounts leave stale dimensions.
+      try {
+        // fitAddon lives on the runtime; Shell accesses terminal only here.
+        terminal.focus();
+      } catch {
+        // Ignore focus errors from detached terminals.
+      }
     };
 
     const animationFrameId = window.requestAnimationFrame(focusTerminal);
@@ -178,6 +193,14 @@ export default function Shell({
       sendSocketMessage(wsRef.current, { type: 'input', data });
     },
     [wsRef],
+  );
+
+  const sendCommandLine = useCallback(
+    (command: string) => {
+      // PTY shells expect CR for "Enter"; append so the command executes.
+      sendInput(`${command}\r`);
+    },
+    [sendInput],
   );
 
   const sessionDisplayName = useMemo(() => getSessionDisplayName(selectedSession), [selectedSession]);
@@ -342,6 +365,10 @@ export default function Shell({
           </div>
         )}
       </div>
+
+      {isPlainShell && (
+        <TerminalCommandInput disabled={!isConnected} onSend={sendCommandLine} />
+      )}
 
       <TerminalShortcutsPanel
         wsRef={wsRef}

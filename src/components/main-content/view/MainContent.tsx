@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import ChatInterface from '../../chat/view/ChatInterface';
 import FileTree from '../../file-tree/view/FileTree';
@@ -17,9 +19,11 @@ import { useEditorSidebar } from '../../code-editor/hooks/useEditorSidebar';
 import EditorSidebar from '../../code-editor/view/EditorSidebar';
 import type { Project } from '../../../types/app';
 import { TaskMasterPanel } from '../../task-master';
+import TerminalPanel from '../../terminal-panel/view/TerminalPanel';
 
 import MainContentHeader from './subcomponents/MainContentHeader';
 import MainContentStateView from './subcomponents/MainContentStateView';
+import MobileMenuButton from './subcomponents/MobileMenuButton';
 import ErrorBoundary from './ErrorBoundary';
 
 type TaskMasterContextValue = {
@@ -55,6 +59,7 @@ function MainContent({
   onProjectSelect,
   onProjectsRefresh,
 }: MainContentProps) {
+  const { t } = useTranslation();
   const { preferences } = useUiPreferences();
   const { showRawParameters, showThinking, sendByCtrlEnter } = preferences;
 
@@ -138,6 +143,32 @@ function MainContent({
     return <MainContentStateView mode="loading" isMobile={isMobile} onMenuClick={onMenuClick} />;
   }
 
+  // Sidebar home terminal: full-bleed multi-tab shell at user home (no project tab bar).
+  if (activeTab === 'home-terminal') {
+    return (
+      <div className="flex h-full flex-col bg-background">
+        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border/60 px-3 py-1.5 sm:px-4">
+          {isMobile && <MobileMenuButton onMenuClick={onMenuClick} />}
+          <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+            {t('terminalPanel.title')}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setActiveTab('chat')}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title={t('buttons.close')}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t('buttons.close')}</span>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <TerminalPanel />
+        </div>
+      </div>
+    );
+  }
+
   if (!selectedProject) {
     return <MainContentStateView mode="empty" isMobile={isMobile} onMenuClick={onMenuClick} />;
   }
@@ -204,7 +235,7 @@ function MainContent({
               <StandaloneShell
                 project={selectedProject}
                 session={null}
-                isPlainShell={true}
+                isPlainShell
                 showHeader={false}
                 isActive={activeTab === 'terminal'}
               />

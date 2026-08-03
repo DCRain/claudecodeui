@@ -20,12 +20,22 @@
   "tabs": {
     "chat": "채팅",
     "shell": "Shell",
-    "terminal": "Terminal",
+    "terminal": "터미널",
     "files": "파일",
     "git": "소스 관리",
     "tasks": "작업",
     "browser": "Browser",
     "computer": "Computer"
+  },
+  "terminalPanel": {
+    "title": "터미널",
+    "tabLabel": "터미널 {{number}}",
+    "newTab": "새 터미널",
+    "closeTab": "터미널 닫기",
+    "copy": "복사",
+    "paste": "붙여넣기",
+    "commandPlaceholder": "명령 입력…",
+    "send": "전송"
   },
   "status": {
     "loading": "로딩 중...",

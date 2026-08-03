@@ -7,7 +7,7 @@ import { WebglAddon } from '@xterm/addon-webgl';
 import { Terminal } from '@xterm/xterm';
 
 import type { Project } from '../../../types/app';
-import { copyTextToClipboard } from '../../../utils/clipboard';
+import { copyTextToClipboard, readTextFromClipboard } from '../../../utils/clipboard';
 import {
   TERMINAL_INIT_DELAY_MS,
   TERMINAL_OPTIONS,
@@ -198,40 +198,88 @@ export function useShellTerminal({
 
     terminalContainer.addEventListener('copy', handleTerminalCopy);
 
+    const injectPasteText = (text: string) => {
+      if (!text) {
+        return;
+      }
+      sendSocketMessage(wsRef.current, { type: 'input', data: text });
+    };
+
+    const readPasteEventText = (event: ClipboardEvent): string => {
+      const data = event.clipboardData;
+      if (!data) {
+        return '';
+      }
+      return data.getData('text/plain') || data.getData('text') || '';
+    };
+
+    // Native paste (Ctrl+V / browser menu Paste) delivers clipboardData.
+    const handleNativePaste = (event: ClipboardEvent) => {
+      const text = readPasteEventText(event);
+      if (!text) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      injectPasteText(text);
+    };
+    terminalContainer.addEventListener('paste', handleNativePaste, true);
+
+    const handleSelectCopy = (event: MouseEvent) => {
+      if (event.button !== 0 || !nextTerminal.hasSelection()) {
+        return;
+      }
+      const selection = nextTerminal.getSelection();
+      if (selection) {
+        void copyTextToClipboard(selection);
+      }
+    };
+    terminalContainer.addEventListener('mouseup', handleSelectCopy);
+
+    const xtermRoot = terminalContainer.querySelector('.xterm') as HTMLElement | null;
+    const helperTextarea = terminalContainer.querySelector(
+      '.xterm-helper-textarea',
+    ) as HTMLTextAreaElement | null;
+
+    // Right-click → read clipboard and paste directly (HTTPS / Electron).
+    const handleContextMenuPaste = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      void readTextFromClipboard({ allowLastWrittenFallback: true }).then((text) => {
+        if (text) {
+          injectPasteText(text);
+        }
+      });
+    };
+    terminalContainer.addEventListener('contextmenu', handleContextMenuPaste, true);
+    xtermRoot?.addEventListener('contextmenu', handleContextMenuPaste, true);
+    xtermRoot?.addEventListener('paste', handleNativePaste, true);
+    helperTextarea?.addEventListener('paste', handleNativePaste, true);
+    helperTextarea?.addEventListener('contextmenu', handleContextMenuPaste, true);
+
     nextTerminal.attachCustomKeyEventHandler((event) => {
-      if (
-        event.type === 'keydown' &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key?.toLowerCase() === 'c' &&
-        nextTerminal.hasSelection()
-      ) {
+      if (event.type !== 'keydown') {
+        return true;
+      }
+
+      const key = event.key?.toLowerCase() ?? '';
+      const isMod = event.ctrlKey || event.metaKey;
+
+      if (isMod && key === 'c' && nextTerminal.hasSelection()) {
         event.preventDefault();
         event.stopPropagation();
         void copyTerminalSelection();
         return false;
       }
 
-      if (
-        event.type === 'keydown' &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key?.toLowerCase() === 'v'
-      ) {
-        // Block native paste so data is only injected after clipboard-read resolves.
-        event.preventDefault();
-        event.stopPropagation();
+      // Unbind Ctrl/Cmd(+Shift)+V from xterm so the browser fires a paste
+      // event. Do NOT preventDefault — that would suppress clipboardData.
+      if (isMod && key === 'v') {
+        return false;
+      }
 
-        if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
-          navigator.clipboard
-            .readText()
-            .then((text) => {
-              sendSocketMessage(wsRef.current, {
-                type: 'input',
-                data: text,
-              });
-            })
-            .catch(() => {});
-        }
-
+      // Shift+Insert paste (common on Linux).
+      if (event.shiftKey && (key === 'insert' || event.code === 'Insert')) {
         return false;
       }
 
@@ -287,6 +335,13 @@ export function useShellTerminal({
 
     return () => {
       terminalContainer.removeEventListener('copy', handleTerminalCopy);
+      terminalContainer.removeEventListener('mouseup', handleSelectCopy);
+      terminalContainer.removeEventListener('contextmenu', handleContextMenuPaste, true);
+      terminalContainer.removeEventListener('paste', handleNativePaste, true);
+      xtermRoot?.removeEventListener('contextmenu', handleContextMenuPaste, true);
+      xtermRoot?.removeEventListener('paste', handleNativePaste, true);
+      helperTextarea?.removeEventListener('paste', handleNativePaste, true);
+      helperTextarea?.removeEventListener('contextmenu', handleContextMenuPaste, true);
       resizeObserver.disconnect();
       if (resizeTimeoutRef.current !== null) {
         window.clearTimeout(resizeTimeoutRef.current);

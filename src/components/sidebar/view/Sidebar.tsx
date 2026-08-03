@@ -37,6 +37,7 @@ function Sidebar({
   loadingProgress,
   onRefresh,
   onShowSettings,
+  onShowTab,
   showSettings,
   settingsInitialTab,
   onCloseSettings,
@@ -229,6 +230,7 @@ function Sidebar({
         <SidebarCollapsed
           onExpand={handleExpandSidebar}
           onShowSettings={onShowSettings}
+          onShowTab={onShowTab}
           updateAvailable={updateAvailable}
           restartRequired={restartRequired}
           onShowVersionModal={() => setShowVersionModal(true)}
@@ -310,6 +312,7 @@ function Sidebar({
             currentVersion={currentVersion}
             onShowVersionModal={() => setShowVersionModal(true)}
             onShowSettings={onShowSettings}
+            onShowTab={onShowTab}
             projectListProps={projectListProps}
             t={t}
           />

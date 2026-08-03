@@ -27,6 +27,16 @@
     "browser": "浏览器",
     "computer": "计算机"
   },
+  "terminalPanel": {
+    "title": "终端",
+    "tabLabel": "终端 {{number}}",
+    "newTab": "新建终端",
+    "closeTab": "关闭终端",
+    "copy": "复制",
+    "paste": "粘贴",
+    "commandPlaceholder": "输入命令…",
+    "send": "发送"
+  },
   "status": {
     "loading": "加载中...",
     "success": "成功",

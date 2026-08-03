@@ -15,6 +15,7 @@ export type ShellInitMessage = {
   initialCommand: string | null | undefined;
   isPlainShell: boolean;
   forceRestart?: boolean;
+  clientTerminalId?: string;
 };
 
 export type ShellResizeMessage = {
@@ -46,6 +47,7 @@ export type UseShellRuntimeOptions = {
   isRestarting: boolean;
   onProcessComplete?: ((exitCode: number) => void) | null;
   onOutputRef?: MutableRefObject<(() => void) | null>;
+  clientTerminalId?: string | null;
 };
 
 export type ShellSharedRefs = {
@@ -57,6 +59,7 @@ export type ShellSharedRefs = {
   initialCommandRef: MutableRefObject<string | null | undefined>;
   isPlainShellRef: MutableRefObject<boolean>;
   onProcessCompleteRef: MutableRefObject<((exitCode: number) => void) | null | undefined>;
+  clientTerminalIdRef: MutableRefObject<string | null | undefined>;
 };
 
 export type UseShellRuntimeResult = {

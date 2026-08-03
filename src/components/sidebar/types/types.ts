@@ -1,4 +1,4 @@
-import type { LoadingProgress, Project, ProjectSession, LLMProvider } from '../../../types/app';
+import type { LoadingProgress, Project, ProjectSession, LLMProvider, AppTab } from '../../../types/app';
 import type { SessionActivityMap } from '../../../hooks/useSessionProtection';
 
 export type ProjectSortOrder = 'name' | 'date';
@@ -55,6 +55,7 @@ export type SidebarProps = {
   loadingProgress: LoadingProgress | null;
   onRefresh: () => Promise<void> | void;
   onShowSettings: () => void;
+  onShowTab?: (tab: AppTab) => void;
   showSettings: boolean;
   settingsInitialTab: string;
   onCloseSettings: () => void;

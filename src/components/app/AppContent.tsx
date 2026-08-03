@@ -208,7 +208,15 @@ function AppContentInner() {
     <div className="fixed inset-0 flex bg-background" style={{ bottom: 'var(--keyboard-height, 0px)' }}>
       {!isMobile ? (
         <div className="h-full flex-shrink-0 border-r border-border/50">
-          <Sidebar {...sidebarSharedProps} />
+          <Sidebar
+            {...sidebarSharedProps}
+            onShowTab={(tab) => {
+              setActiveTab(tab);
+              if (isMobile) {
+                setSidebarOpen(false);
+              }
+            }}
+          />
         </div>
       ) : (
         <div
@@ -234,7 +242,13 @@ function AppContentInner() {
             onClick={(event) => event.stopPropagation()}
             onTouchStart={(event) => event.stopPropagation()}
           >
-            <Sidebar {...sidebarSharedProps} />
+            <Sidebar
+              {...sidebarSharedProps}
+              onShowTab={(tab) => {
+                setActiveTab(tab);
+                setSidebarOpen(false);
+              }}
+            />
           </div>
         </div>
       )}

@@ -27,6 +27,16 @@
     "browser": "Navigateur",
     "computer": "Ordinateur"
   },
+  "terminalPanel": {
+    "title": "Terminal",
+    "tabLabel": "Terminal {{number}}",
+    "newTab": "Nouveau terminal",
+    "closeTab": "Fermer le terminal",
+    "copy": "Copier",
+    "paste": "Coller",
+    "commandPlaceholder": "Saisir une commande…",
+    "send": "Envoyer"
+  },
   "status": {
     "loading": "Chargement...",
     "success": "Succès",

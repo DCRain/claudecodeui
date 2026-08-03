@@ -20,6 +20,8 @@ type ShellIncomingMessage = {
   initialCommand?: string;
   isPlainShell?: boolean;
   forceRestart?: boolean;
+  /** Isolates multi-tab plain shells that share the same cwd. */
+  clientTerminalId?: string;
 };
 
 type PtySessionEntry = {
@@ -117,6 +119,30 @@ function readString(value: unknown, fallback = ''): string {
 }
 
 /**
+ * Resolves the PTY working directory from an init `projectPath`.
+ * `~` / `$HOME` (and `~/…`) map to the OS home directory; empty keeps
+ * process.cwd() so existing callers that send '' are unchanged.
+ */
+function resolveShellCwd(projectPath: string): string {
+  const trimmed = projectPath.trim();
+  if (trimmed === '~' || trimmed === '$HOME') {
+    return os.homedir();
+  }
+  if (trimmed.startsWith('~/')) {
+    return path.join(os.homedir(), trimmed.slice(2));
+  }
+  if (trimmed.startsWith('$HOME/') || trimmed.startsWith('$HOME\\')) {
+    return path.join(os.homedir(), trimmed.slice('$HOME/'.length));
+  }
+  if (!trimmed) {
+    return process.cwd();
+  }
+  return path.resolve(trimmed);
+}
+
+const SAFE_CLIENT_TERMINAL_ID_PATTERN = /^[a-zA-Z0-9_.\-]+$/;
+
+/**
  * Reads a boolean field from untyped payloads and falls back when absent.
  */
 function readBoolean(value: unknown, fallback = false): boolean {
@@ -128,6 +154,12 @@ function readBoolean(value: unknown, fallback = false): boolean {
  */
 function readNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+/** PTY rejects non-positive dimensions; coerce bad client sizes to a safe default. */
+function readTerminalDimension(value: unknown, fallback: number): number {
+  const parsed = readNumber(value, fallback);
+  return parsed >= 2 ? Math.floor(parsed) : fallback;
 }
 
 /**
@@ -451,6 +483,11 @@ export function handleShellConnection(
         const provider = readString(data.provider, 'claude');
         const initialCommand = readString(data.initialCommand);
         const forceRestart = readBoolean(data.forceRestart);
+        const rawClientTerminalId = readString(data.clientTerminalId).trim();
+        const clientTerminalId =
+          rawClientTerminalId && SAFE_CLIENT_TERMINAL_ID_PATTERN.test(rawClientTerminalId)
+            ? rawClientTerminalId
+            : '';
         const {
           shell,
           args: shellArgs,
@@ -473,9 +510,11 @@ export function handleShellConnection(
         // Keep plain project terminals on a separate PTY key so they never
         // reconnect into a CLI-backed shell for the same project. Include the
         // shell basename so switching default shell does not reuse an old PTY.
+        // Optional clientTerminalId isolates multi-tab shells that share a cwd.
         const plainShellKey = path.basename(shell || 'shell').toLowerCase();
+        const tabSuffix = clientTerminalId ? `_${clientTerminalId}` : '';
         ptySessionKey = isPlainShell
-          ? `${projectPath}_plain_${plainShellKey}${commandSuffix}`
+          ? `${projectPath}_plain_${plainShellKey}${tabSuffix}${commandSuffix}`
           : `${projectPath}_${sessionId ?? 'default'}${commandSuffix}`;
 
         if (isLoginCommand || forceRestart) {
@@ -520,7 +559,7 @@ export function handleShellConnection(
           return;
         }
 
-        const resolvedProjectPath = path.resolve(projectPath);
+        const resolvedProjectPath = resolveShellCwd(projectPath);
         try {
           const stats = fs.statSync(resolvedProjectPath);
           if (!stats.isDirectory()) {
@@ -538,8 +577,8 @@ export function handleShellConnection(
         }
 
         const resumeSessionId = resolveResumeSessionId(data, dependencies);
-        const termCols = readNumber(data.cols, 80);
-        const termRows = readNumber(data.rows, 24);
+        const termCols = readTerminalDimension(data.cols, 80);
+        const termRows = readTerminalDimension(data.rows, 24);
         const prioritizedPath = prioritizeUserNpmGlobalBin(process.env);
         const shellEnv: NodeJS.ProcessEnv = {
           ...process.env,
@@ -674,7 +713,7 @@ export function handleShellConnection(
           shellProcess = null;
         });
 
-        let welcomeMsg = `\x1b[36mStarting ${path.basename(shell)} in: ${projectPath}\x1b[0m\r\n`;
+        let welcomeMsg = `\x1b[36mStarting ${path.basename(shell)} in: ${resolvedProjectPath}\x1b[0m\r\n`;
         if (!isPlainShell) {
           const providerName =
             provider === 'cursor'
@@ -685,8 +724,8 @@ export function handleShellConnection(
                     ? 'OpenCode'
                   : 'Claude';
           welcomeMsg = hasSession && resumeSessionId
-            ? `\x1b[36mResuming ${providerName} session ${resumeSessionId} in: ${projectPath}\x1b[0m\r\n`
-            : `\x1b[36mStarting new ${providerName} session in: ${projectPath}\x1b[0m\r\n`;
+            ? `\x1b[36mResuming ${providerName} session ${resumeSessionId} in: ${resolvedProjectPath}\x1b[0m\r\n`
+            : `\x1b[36mStarting new ${providerName} session in: ${resolvedProjectPath}\x1b[0m\r\n`;
         }
 
         ws.send(
@@ -707,7 +746,7 @@ export function handleShellConnection(
 
       if (data.type === 'resize') {
         if (shellProcess) {
-          shellProcess.resize(readNumber(data.cols, 80), readNumber(data.rows, 24));
+          shellProcess.resize(readTerminalDimension(data.cols, 80), readTerminalDimension(data.rows, 24));
         }
       }
     } catch (error) {

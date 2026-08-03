@@ -1,5 +1,7 @@
-import { Settings, Sparkles, PanelLeftOpen, Bug, AlertTriangle } from 'lucide-react';
+import { Settings, Sparkles, PanelLeftOpen, Bug, AlertTriangle, SquareTerminal } from 'lucide-react';
 import type { TFunction } from 'i18next';
+
+import type { AppTab } from '../../../../types/app';
 
 const DISCORD_INVITE_URL = 'https://discord.gg/buxwujPNRE';
 const GITHUB_ISSUES_URL = 'https://github.com/siteboon/claudecodeui/issues/new';
@@ -15,6 +17,7 @@ function DiscordIcon({ className }: { className?: string }) {
 type SidebarCollapsedProps = {
   onExpand: () => void;
   onShowSettings: () => void;
+  onShowTab?: (tab: AppTab) => void;
   updateAvailable: boolean;
   restartRequired: boolean;
   onShowVersionModal: () => void;
@@ -24,6 +27,7 @@ type SidebarCollapsedProps = {
 export default function SidebarCollapsed({
   onExpand,
   onShowSettings,
+  onShowTab,
   updateAvailable,
   restartRequired,
   onShowVersionModal,
@@ -42,6 +46,18 @@ export default function SidebarCollapsed({
       </button>
 
       <div className="nav-divider my-1 w-6" />
+
+      {/* Terminal */}
+      {onShowTab && (
+        <button
+          onClick={() => onShowTab('home-terminal')}
+          className="group flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-accent/80"
+          aria-label={t('navigation.terminal')}
+          title={t('navigation.terminal')}
+        >
+          <SquareTerminal className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+        </button>
+      )}
 
       {/* Settings */}
       <button
@@ -79,25 +95,25 @@ export default function SidebarCollapsed({
 
       {/* Restart-required indicator */}
       {restartRequired && (
-        <div
-          className="relative flex h-8 w-8 items-center justify-center rounded-lg"
+        <button
+          onClick={onShowVersionModal}
+          className="group relative mt-auto flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-amber-500/10"
           aria-label={t('version.restartRequired')}
           title={t('version.restartRequired')}
         >
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-        </div>
+          <AlertTriangle className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+        </button>
       )}
 
-      {/* Update indicator */}
-      {updateAvailable && (
+      {/* Update available indicator */}
+      {updateAvailable && !restartRequired && (
         <button
           onClick={onShowVersionModal}
-          className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-accent/80"
-          aria-label={t('common:versionUpdate.ariaLabels.updateAvailable')}
-          title={t('common:versionUpdate.ariaLabels.updateAvailable')}
+          className="group relative mt-auto flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-500/10"
+          aria-label={t('version.updateAvailable')}
+          title={t('version.updateAvailable')}
         >
-          <Sparkles className="h-4 w-4 text-blue-500" />
+          <Sparkles className="h-4 w-4 text-blue-500 dark:text-blue-400" />
           <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
         </button>
       )}

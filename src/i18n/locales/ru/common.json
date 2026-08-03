@@ -20,12 +20,22 @@
   "tabs": {
     "chat": "Чат",
     "shell": "Терминал",
-    "terminal": "Системный терминал",
+    "terminal": "Терминал",
     "files": "Файлы",
     "git": "Система контроля версий",
     "tasks": "Задачи",
     "browser": "Browser",
     "computer": "Компьютер"
+  },
+  "terminalPanel": {
+    "title": "Терминал",
+    "tabLabel": "Терминал {{number}}",
+    "newTab": "Новый терминал",
+    "closeTab": "Закрыть терминал",
+    "copy": "Копировать",
+    "paste": "Вставить",
+    "commandPlaceholder": "Введите команду…",
+    "send": "Отправить"
   },
   "status": {
     "loading": "Загрузка...",

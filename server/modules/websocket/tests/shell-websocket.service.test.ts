@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
+import os from 'node:os';
 import test from 'node:test';
 
 import { WebSocket } from 'ws';
@@ -116,4 +117,83 @@ test('shell output detects and normalizes a wrapped authentication URL', () => {
   });
 
   pty.emitExit();
+});
+
+test('plain shell resolves ~ to the user home directory', () => {
+  const pty = createFakePty();
+  let spawnedCwd = '';
+  const dependencies = {
+    resolveProviderSessionId: () => null,
+    spawnPty: (_file: string, _args: string[], options: { cwd?: string }) => {
+      spawnedCwd = options.cwd ?? '';
+      return pty as never;
+    },
+  };
+  const socket = createFakeSocket();
+
+  handleShellConnection(socket as never, dependencies);
+  socket.emit(
+    'message',
+    JSON.stringify({
+      type: 'init',
+      projectPath: '~',
+      sessionId: null,
+      hasSession: false,
+      provider: 'plain-shell',
+      isPlainShell: true,
+      clientTerminalId: `home-cwd-${Date.now()}`,
+    })
+  );
+
+  assert.equal(spawnedCwd, os.homedir());
+  assert.match(socket.frames[0] ?? '', /Starting .+ in:/);
+  pty.emitExit();
+});
+
+test('clientTerminalId isolates plain shell PTY sessions that share a cwd', () => {
+  const firstPty = createFakePty();
+  const secondPty = createFakePty();
+  const spawned: Array<{ cwd?: string }> = [];
+  const dependencies = {
+    resolveProviderSessionId: () => null,
+    spawnPty: (_file: string, _args: string[], options: { cwd?: string }) => {
+      spawned.push(options);
+      return (spawned.length === 1 ? firstPty : secondPty) as never;
+    },
+  };
+
+  const firstSocket = createFakeSocket();
+  handleShellConnection(firstSocket as never, dependencies);
+  firstSocket.emit(
+    'message',
+    JSON.stringify({
+      type: 'init',
+      projectPath: '~',
+      hasSession: false,
+      provider: 'plain-shell',
+      isPlainShell: true,
+      clientTerminalId: 'tab-a',
+    })
+  );
+
+  const secondSocket = createFakeSocket();
+  handleShellConnection(secondSocket as never, dependencies);
+  secondSocket.emit(
+    'message',
+    JSON.stringify({
+      type: 'init',
+      projectPath: '~',
+      hasSession: false,
+      provider: 'plain-shell',
+      isPlainShell: true,
+      clientTerminalId: 'tab-b',
+    })
+  );
+
+  assert.equal(spawned.length, 2);
+  assert.equal(firstPty.killed, false);
+  assert.equal(secondPty.killed, false);
+
+  firstPty.emitExit();
+  secondPty.emitExit();
 });

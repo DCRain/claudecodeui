@@ -731,6 +731,11 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('cloudcli-desktop:copy-local-web-url', async () => copyLocalWebUrl());
+  ipcMain.handle('cloudcli-desktop:clipboard-read-text', () => clipboard.readText());
+  ipcMain.handle('cloudcli-desktop:clipboard-write-text', (_event, text) => {
+    clipboard.writeText(typeof text === 'string' ? text : '');
+    return true;
+  });
   ipcMain.handle('cloudcli-desktop:get-state', () => getDesktopState());
   ipcMain.handle('cloudcli-desktop:open-cloud-dashboard', async () => openCloudDashboard());
   ipcMain.handle('cloudcli-desktop:run-active-environment-action', async (_event, action) => runActiveEnvironmentAction(action));

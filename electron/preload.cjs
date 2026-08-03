@@ -20,6 +20,13 @@ function onDesktopStateUpdated(callback) {
   };
 }
 
+// Clipboard bridge is available for any page loaded in the desktop shell so
+// terminal right-click paste works on localhost and LAN IP origins.
+contextBridge.exposeInMainWorld('cloudcliClipboard', {
+  readText: () => ipcRenderer.invoke('cloudcli-desktop:clipboard-read-text'),
+  writeText: (text) => ipcRenderer.invoke('cloudcli-desktop:clipboard-write-text', text),
+});
+
 if (isCloudCliAppOrigin(window.location)) {
   contextBridge.exposeInMainWorld('cloudcliDesktopNotifications', {
     getState: () => ipcRenderer.invoke('cloudcli-desktop:get-state'),

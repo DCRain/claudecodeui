@@ -20,6 +20,7 @@ type UseShellConnectionOptions = {
   initialCommandRef: MutableRefObject<string | null | undefined>;
   isPlainShellRef: MutableRefObject<boolean>;
   onProcessCompleteRef: MutableRefObject<((exitCode: number) => void) | null | undefined>;
+  clientTerminalIdRef: MutableRefObject<string | null | undefined>;
   isInitialized: boolean;
   autoConnect: boolean;
   closeSocket: () => void;
@@ -44,6 +45,7 @@ export function useShellConnection({
   initialCommandRef,
   isPlainShellRef,
   onProcessCompleteRef,
+  clientTerminalIdRef,
   isInitialized,
   autoConnect,
   closeSocket,
@@ -138,17 +140,25 @@ export function useShellConnection({
             const forceRestart = forceRestartOnInitRef.current;
             forceRestartOnInitRef.current = false;
 
+            // Zero-size containers (e.g. display:none) can make fit() yield 0x0,
+            // which breaks node-pty; fall back to a usable default.
+            const cols = Math.max(2, currentTerminal.cols || 80);
+            const rows = Math.max(2, currentTerminal.rows || 24);
+
             sendSocketMessage(socket, {
               type: 'init',
               projectPath: currentProject.fullPath || currentProject.path || '',
               sessionId: isPlainShellRef.current ? null : selectedSessionRef.current?.id || null,
               hasSession: isPlainShellRef.current ? false : Boolean(selectedSessionRef.current),
               provider: isPlainShellRef.current ? 'plain-shell' : (selectedSessionRef.current?.__provider || localStorage.getItem('selected-provider') || 'claude'),
-              cols: currentTerminal.cols,
-              rows: currentTerminal.rows,
+              cols,
+              rows,
               initialCommand: initialCommandRef.current,
               isPlainShell: isPlainShellRef.current,
               forceRestart,
+              ...(clientTerminalIdRef.current
+                ? { clientTerminalId: clientTerminalIdRef.current }
+                : {}),
             });
           }, TERMINAL_INIT_DELAY_MS);
         };
@@ -179,6 +189,7 @@ export function useShellConnection({
     },
     [
       clearTerminalScreen,
+      clientTerminalIdRef,
       fitAddonRef,
       handleSocketMessage,
       initialCommandRef,

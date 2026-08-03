@@ -680,7 +680,12 @@ export class DesktopWindowManager {
   configurePermissions() {
     const isAllowedPermission = (webContents, permission) => {
       const sourceUrl = webContents.getURL();
-      const allowedPermissions = new Set(['clipboard-read', 'media', 'notifications']);
+      const allowedPermissions = new Set(['clipboard-read', 'clipboard-sanitized-write', 'media', 'notifications']);
+      // Clipboard access is required for terminal paste; allow it for any origin
+      // this desktop shell can load (localhost, LAN IP, cloud control plane).
+      if (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write') {
+        return true;
+      }
       return isAllowedPermissionOrigin(sourceUrl, this.getCloudState().controlPlaneUrl) && allowedPermissions.has(permission);
     };
 

@@ -27,6 +27,16 @@
     "browser": "Browser",
     "computer": "Bilgisayar"
   },
+  "terminalPanel": {
+    "title": "Terminal",
+    "tabLabel": "Terminal {{number}}",
+    "newTab": "Yeni terminal",
+    "closeTab": "Terminali kapat",
+    "copy": "Kopyala",
+    "paste": "Yapıştır",
+    "commandPlaceholder": "Komut girin…",
+    "send": "Gönder"
+  },
   "status": {
     "loading": "Yükleniyor...",
     "success": "Başarılı",

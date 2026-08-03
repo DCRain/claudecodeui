@@ -27,6 +27,16 @@
     "browser": "Browser",
     "computer": "Computer"
   },
+  "terminalPanel": {
+    "title": "Terminal",
+    "tabLabel": "Terminal {{number}}",
+    "newTab": "New terminal",
+    "closeTab": "Close terminal",
+    "copy": "Copy",
+    "paste": "Paste",
+    "commandPlaceholder": "Enter command…",
+    "send": "Send"
+  },
   "status": {
     "loading": "Loading...",
     "success": "Success",
