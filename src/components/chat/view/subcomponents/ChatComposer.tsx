@@ -76,6 +76,8 @@ interface ChatComposerProps {
   availableModelOptions: ProviderModelOption[];
   onSelectModel: (model: string) => void;
   modelsLoading: boolean;
+  modelsRefreshing: boolean;
+  onRefreshModels: () => void;
   tokenBudget: Record<string, unknown> | null;
   onShowTokenUsage: () => void;
   slashCommandsCount: number;
@@ -140,6 +142,8 @@ export default function ChatComposer({
   availableModelOptions,
   onSelectModel,
   modelsLoading,
+  modelsRefreshing,
+  onRefreshModels,
   tokenBudget,
   onShowTokenUsage,
   slashCommandsCount,
@@ -441,6 +445,8 @@ export default function ChatComposer({
               modelOptions={availableModelOptions}
               onSelectModel={onSelectModel}
               modelsLoading={modelsLoading}
+              modelsRefreshing={modelsRefreshing}
+              onRefreshModels={onRefreshModels}
             />
 
             <ComposerPermissionMenu

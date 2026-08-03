@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
 
 import type { ProviderModelOption } from '../../../../types/app';
 import { DEFAULT_EFFORT_VALUE } from '../../constants/providerEffort';
@@ -26,6 +26,8 @@ interface ComposerModelMenuProps {
   modelOptions: ProviderModelOption[];
   onSelectModel: (model: string) => void;
   modelsLoading: boolean;
+  modelsRefreshing: boolean;
+  onRefreshModels: () => void;
 }
 
 export default function ComposerModelMenu({
@@ -36,6 +38,8 @@ export default function ComposerModelMenu({
   modelOptions,
   onSelectModel,
   modelsLoading,
+  modelsRefreshing,
+  onRefreshModels,
 }: ComposerModelMenuProps) {
   const { t } = useTranslation('chat');
   const [isOpen, setIsOpen] = useState(false);
@@ -138,7 +142,22 @@ export default function ComposerModelMenu({
               {isModelSectionOpen && (
                 <>
                   <ComposerMenuHeading>
-                    {t('composer.model', { defaultValue: 'Model' })}
+                    <span className="flex items-center justify-between">
+                      {t('composer.model', { defaultValue: 'Model' })}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRefreshModels();
+                        }}
+                        disabled={modelsRefreshing}
+                        title="Refresh model list"
+                        aria-label="Refresh model list"
+                        className="ml-2 flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+                      >
+                        <RefreshCw className={`h-3 w-3 ${modelsRefreshing ? 'animate-spin' : ''}`} />
+                      </button>
+                    </span>
                   </ComposerMenuHeading>
                   {modelOptions.length === 0 && modelsLoading && (
                     <p className="px-2.5 py-1.5 text-sm text-muted-foreground">
